@@ -47,12 +47,10 @@ const registerAdmin = async (req, res) => {
 
 const loginAdmin = async (req, res) => {
   try {
-    const { email, idcard, phonenumber, password } = req.body
+    const { username, email, password } = req.body
 
-    if (!email && !idcard && !phonenumber) {
-      return res
-        .status(400)
-        .json({ message: 'Email, ID card or phone number is required' })
+    if (!email && !username && !password) {
+      return res.status(400).json({ message: 'Username, email or phone number is required' })
     }
 
     if (!password) {
@@ -63,14 +61,9 @@ const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email' })
     }
 
-    if (phonenumber && !validator.isMobilePhone(phonenumber, 'vi-VN')) {
-      return res.status(400).json({ message: 'Invalid phone number' })
-    }
-
     const conditions = []
     if (email) conditions.push({ email })
-    if (idcard) conditions.push({ idcard })
-    if (phonenumber) conditions.push({ phonenumber })
+    if (username) conditions.push({ username })
 
     const user = await User.findOne({
       where: { [Op.or]: conditions }

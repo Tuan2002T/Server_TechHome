@@ -1,7 +1,10 @@
 const { Sequelize } = require('sequelize')
+const dotenv = require('dotenv');
+dotenv.config();
 
-const sequelize = new Sequelize('techhome', 'postgres', 'postgres', {
-  host: 'localhost',
+const sequelize = new Sequelize(process.env.DATABASE,  process.env.USERNAMEPG, process.env.PASSWORD, {
+  host: process.env.HOST,
+  port: process.env.PORT,
   dialect: 'postgres',
   logging: console.log
 })
