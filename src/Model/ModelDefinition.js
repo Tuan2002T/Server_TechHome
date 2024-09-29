@@ -1,13 +1,18 @@
 const { Sequelize } = require('sequelize')
-const dotenv = require('dotenv');
-dotenv.config();
+const dotenv = require('dotenv')
+dotenv.config()
 
-const sequelize = new Sequelize(process.env.DATABASE,  process.env.USERNAMEPG, process.env.PASSWORD, {
-  host: process.env.HOST,
-  port: process.env.PORT,
-  dialect: 'postgres',
-  logging: console.log
-})
+const sequelize = new Sequelize(
+  process.env.DATABASE,
+  process.env.USERNAMEPG,
+  process.env.PASSWORD,
+  {
+    host: process.env.HOST,
+    port: process.env.PORT,
+    dialect: 'postgres',
+    logging: console.log
+  }
+)
 
 const adminModel = require('./AdminModel.js')
 const apartmentDetailModel = require('./ApartmentDetailModel.js')
@@ -44,228 +49,228 @@ const Service = sequelize.define('Service', serviceModel)
 const User = sequelize.define('User', userModel)
 const Vehicle = sequelize.define('Vehicle', vehicleModel)
 
-//User and Role relationship
+// User and Role relationship
 User.belongsTo(Roles, {
   foreignKey: 'roleId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại User nếu Role bị xóa
 })
 Roles.hasMany(User, {
   foreignKey: 'roleId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Role nếu User bị xóa
 })
 
-//User and Admin relationship
+// User and Admin relationship
 User.hasOne(Admin, {
   foreignKey: 'userId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Admin nếu User bị xóa
 })
 Admin.belongsTo(User, {
   foreignKey: 'userId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa User nếu Admin bị xóa
 })
-//User and Resident relationship
+
+// User and Resident relationship
 User.hasOne(Resident, {
   foreignKey: 'userId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại User nếu Resident bị xóa
 })
 Resident.belongsTo(User, {
   foreignKey: 'userId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa User nếu Resident bị xóa
 })
-//Resident and Apartment relationship
+
+// Resident and Apartment relationship
 Apartment.belongsToMany(Resident, {
   through: 'ResidentApartments',
   foreignKey: 'apartmentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Resident nếu Apartment bị xóa
 })
 Resident.belongsToMany(Apartment, {
   through: 'ResidentApartments',
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Apartment nếu Resident bị xóa
 })
 
-//Building and Floor relationship
+// Building and Floor relationship
 Building.hasMany(Floor, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Floor nếu Building bị xóa
 })
 Floor.belongsTo(Building, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Floor nếu Building bị xóa
 })
 
-//Building and Service relationship
+// Building and Service relationship
 Building.hasMany(Service, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Service nếu Building bị xóa
 })
 Service.belongsTo(Building, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Service nếu Building bị xóa
 })
 
-//Buiding and Admin relationship
+// Building and Admin relationship
 Building.hasMany(Admin, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Admin nếu Building bị xóa
 })
 Admin.belongsTo(Building, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Admin nếu Building bị xóa
 })
 
-//Floor and Apartment relationship
+// Floor and Apartment relationship
 Floor.hasMany(Apartment, {
   foreignKey: 'floorId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Apartment nếu Floor bị xóa
 })
 Apartment.belongsTo(Floor, {
   foreignKey: 'floorId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Floor nếu Apartment bị xóa
 })
 
-//Apartment and ApartmentDetail relationship
+// Apartment and ApartmentDetail relationship
 Apartment.hasOne(ApartmentDetail, {
   foreignKey: 'apartmentId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa ApartmentDetail nếu Apartment bị xóa
 })
 ApartmentDetail.belongsTo(Apartment, {
   foreignKey: 'apartmentId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Apartment nếu ApartmentDetail bị xóa
 })
 
-//Resident and ApartmentDetail relationship
+// Resident and ApartmentDetail relationship
 Resident.hasMany(ApartmentDetail, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại ApartmentDetail nếu Resident bị xóa
 })
 ApartmentDetail.belongsTo(Resident, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Resident nếu ApartmentDetail bị xóa
 })
 
-//Resident and Vehicle relationship
+// Resident and Vehicle relationship
 Resident.hasMany(Vehicle, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Vehicle nếu Resident bị xóa
 })
 Vehicle.belongsTo(Resident, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Vehicle nếu Resident bị xóa
 })
 
-//Resident and Complaint relationship
+// Resident and Complaint relationship
 Resident.hasMany(Complaint, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Complaint nếu Resident bị xóa
 })
 Complaint.belongsTo(Resident, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Resident nếu Complaint bị xóa
 })
 
-//Resident and Notification relationship
+// Resident and Notification relationship
 Resident.hasMany(Notification, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Notification nếu Resident bị xóa
 })
 Notification.belongsToMany(Resident, {
   through: 'NotificationResident',
   foreignKey: 'notificationId',
-  otherKey: 'residentId'
+  otherKey: 'residentId',
+  onDelete: 'SET NULL' // Giữ lại Notification nếu Resident bị xóa
 })
 
-//Resident and Payment relationship
+// Resident and Payment relationship
 Resident.hasMany(Payment, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Payment nếu Resident bị xóa
 })
 Payment.belongsTo(Resident, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Resident nếu Payment bị xóa
 })
 
-//Resident and Service relationship
-
+// Resident and Service relationship
 Resident.hasMany(Service, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Service nếu Resident bị xóa
 })
 Service.belongsTo(Resident, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Resident nếu Service bị xóa
 })
 
-//Payment and Service relationship
+// Payment and Service relationship
 Payment.hasMany(Service, {
   foreignKey: 'paymentId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Service nếu Payment bị xóa
 })
 Service.belongsTo(Payment, {
   foreignKey: 'paymentId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Payment nếu Service bị xóa
 })
 
-//building and Facility relationship
+// Building and Facility relationship
 Building.hasMany(Facility, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Facility nếu Building bị xóa
 })
 Facility.belongsTo(Building, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Building nếu Facility bị xóa
 })
 
-//Building and Event relationship
+// Building and Event relationship
 Building.hasMany(Event, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'SET NULL' // Giữ lại Event nếu Building bị xóa
 })
 Event.belongsTo(Building, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE' // Xóa Building nếu Event bị xóa
 })
 
-const initializeDefaultAdmin = async () => {
-  try {
-    // Kiểm tra xem có admin nào đã tồn tại chưa
-    const adminExists = await Admin.findOne();
+// const initializeDefaultAdmin = async () => {
+//   try {
+//     // Kiểm tra xem có admin nào đã tồn tại chưa
+//     const adminExists = await Admin.findOne()
 
-    if (!adminExists) {
-      // Tạo role cho admin nếu chưa có
-      let adminRole = await Roles.findOne({ where: { roleName: 'Admin' } });
+//     if (!adminExists) {
+//       // Tạo role cho admin nếu chưa có
+//       let adminRole = await Roles.findOne({ where: { roleName: 'Admin' } })
 
-      if (!adminRole) {
-        adminRole = await Roles.create({ roleName: 'Admin' });
-      }
+//       if (!adminRole) {
+//         adminRole = await Roles.create({ roleName: 'Admin' })
+//       }
 
-      // Tạo user cho admin
-      const user = await User.create({
-        fullname: 'Default Admin',
-        username: 'admin',
-        password: 'admin123', // Bạn nên mã hóa mật khẩu trước khi lưu
-        email: 'admin@techhome.com',
-        roleId: adminRole.roleId,
-      });
+//       // Tạo user cho admin
+//       const user = await User.create({
+//         fullname: 'Default Admin',
+//         username: 'admin',
+//         password: 'admin123', // Bạn nên mã hóa mật khẩu trước khi lưu
+//         email: 'admin@techhome.com',
+//         roleId: adminRole.roleId
+//       })
 
-      // Tạo admin với userId và roleId vừa tạo
-      await Admin.create({
-        userId: user.userId,
-      });
+//       // Tạo admin với userId và roleId vừa tạo
+//       await Admin.create({
+//         userId: user.userId
+//       })
 
-      console.log('Default admin created successfully');
-    } else {
-      console.log('Admin already exists');
-    }
-  } catch (error) {
-    console.error('Error initializing default admin:', error);
-  }
-};
-
-
+//       console.log('Default admin created successfully')
+//     } else {
+//       console.log('Admin already exists')
+//     }
+//   } catch (error) {
+//     console.error('Error initializing default admin:', error)
+//   }
+// }
 
 module.exports = {
-  initializeDefaultAdmin,
+  // initializeDefaultAdmin,
   sequelize,
   User,
   Admin,

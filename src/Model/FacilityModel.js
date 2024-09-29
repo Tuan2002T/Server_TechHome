@@ -11,7 +11,7 @@ const facilityModel = {
     allowNull: false
   },
   facilityDescription: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: false
   },
   facilityLocation: {

@@ -50,7 +50,9 @@ const loginAdmin = async (req, res) => {
     const { username, email, password } = req.body
 
     if (!email && !username && !password) {
-      return res.status(400).json({ message: 'Username, email or phone number is required' })
+      return res
+        .status(400)
+        .json({ message: 'Username, email or phone number is required' })
     }
 
     if (!password) {

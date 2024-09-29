@@ -2,7 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
 const cors = require('cors')
-const { sequelize, initializeDefaultAdmin } = require('./src/Model/ModelDefinition')
+const { sequelize } = require('./src/Model/ModelDefinition')
 require('dotenv').config()
 
 app.use(bodyParser.json())
@@ -19,7 +19,7 @@ app.listen(3000, () => {
 
 sequelize.sync({ alter: true }).then(() => {
   console.log('Database is connected')
-  initializeDefaultAdmin()
+  // initializeDefaultAdmin()
 })
 app.get('/', (req, res) => {
   res.send('Welcome to TechHome...!')

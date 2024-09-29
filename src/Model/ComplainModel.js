@@ -6,15 +6,15 @@ const complainModel = {
     autoIncrement: true,
     primaryKey: true
   },
-  complainDescription: {
+  complaintDescription: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  complainDate: {
+  complaintDate: {
     type: DataTypes.DATE,
     allowNull: false
   },
-  complainStatus: {
+  complaintStatus: {
     type: DataTypes.STRING,
     allowNull: false
   }

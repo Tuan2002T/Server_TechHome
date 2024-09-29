@@ -10,7 +10,8 @@ const {
   getAllBuildings,
   getBuildingById,
   createBuilding,
-  updateBuilding
+  updateBuilding,
+  deleteBuilding
 } = require('../Controller/AdminController/Building')
 const {
   getEventById,
@@ -45,8 +46,9 @@ router.post('/registerResident/:adminId', registerResident)
 // manage building
 router.get('/building', getAllBuildings)
 router.get('/building/:id', getBuildingById)
-router.post('/building', createBuilding)
+router.post('/building/:adminId', createBuilding)
 router.put('/building/:id', updateBuilding)
+router.delete('/building/:id', deleteBuilding)
 
 // manage event
 router.get('/event', getAllEvents)

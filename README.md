@@ -1,4 +1,6 @@
-"# Server_TechHome" 
+"# Server_TechHome"
+
 - npm i
-- node dbsetup.js
+- node db\dbsetup.js
 - nodemon or node index.js
+- node db\data.js
