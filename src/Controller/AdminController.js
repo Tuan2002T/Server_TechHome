@@ -10,35 +10,47 @@ const jwtToken = (userId) => {
 
 const registerAdmin = async (req, res) => {
   try {
-    const { fullname, username } = req.body
-    const { adminId } = req.params
+    const { fullname, username, password, email } = req.body
 
-    if (!fullname || !username) {
+    if (!fullname || !username || !password || !email) {
       return res.status(400).json({ message: 'All fields are required' })
     }
 
     const user = await User.findOne({
-      where: { username }
+      where: {
+        [Op.or]: [{ username: username }, { email: email }]
+      }
     })
 
     if (user) {
-      return res.status(400).json({ message: 'Username already exists' })
+      return res
+        .status(400)
+        .json({ message: 'Username or email already exists' })
     }
 
-    const admin = await Admin.findOne({
-      where: { userId: adminId }
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    const adminRole = await Roles.findOne({
+      where: { roleName: 'Admin' }
     })
 
-    if (!admin) {
-      return res.status(400).json({ message: 'Admin not found' })
+    if (!adminRole) {
+      return res.status(400).json({ message: 'Role not found' })
     }
 
-    const newAdmin = {
+    const newUser = {
       fullname,
-      username
+      username,
+      email,
+      password: hashedPassword,
+      roleId: adminRole.roleId
     }
 
-    await User.create(newAdmin)
+    const u = await User.create(newUser)
+
+    await Admin.create({ userId: u.userId })
+
+    res.status(201).json({ message: 'Admin created successfully' })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -75,6 +87,10 @@ const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: 'User not found' })
     }
 
+    if (user.roleId !== 1) {
+      return res.status(400).json({ message: 'User is not an admin' })
+    }
+
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
       return res.status(400).json({ message: 'Incorrect password' })
@@ -82,6 +98,29 @@ const loginAdmin = async (req, res) => {
 
     const token = jwtToken(user.userId)
     res.status(200).json({ user, token })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+const getAdminById = async (req, res) => {
+  try {
+    const { adminId } = req.params
+
+    const admin = await Admin.findOne({
+      where: { userId: adminId }
+    })
+
+    if (!admin) {
+      return res.status(400).json({ message: 'Admin not found' })
+    }
+
+    const user = await User.findOne({
+      where: { userId: admin.userId }
+    })
+
+    res.status(200).json({ user, admin })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -148,4 +187,4 @@ const registerResident = async (req, res) => {
   }
 }
 
-module.exports = { registerAdmin, loginAdmin, registerResident }
+module.exports = { registerAdmin, loginAdmin, registerResident, getAdminById }

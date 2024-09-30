@@ -10,18 +10,26 @@ const jwtToken = (userId) => {
 
 const activeResident = async (req, res) => {
   try {
-    const { email, idcard, phonenumber, username, pa } = req.body
+    const { email, fullname, idcard, phonenumber, username, password } =
+      req.body
 
-    if (!email && !idcard && !phonenumber && !username) {
-      return res
-        .status(400)
-        .json({ message: 'Email, ID card or phone number is required' })
+    if (
+      !email &&
+      !idcard &&
+      !phonenumber &&
+      !username &&
+      !password &&
+      !fullname
+    ) {
+      return res.status(400).json({
+        message:
+          'Email, ID card, fullname, password or phone number is required'
+      })
     }
 
     const conditions = []
     if (email) conditions.push({ email })
-    if (idcard) conditions.push({ idcard })
-    if (phonenumber) conditions.push({ phonenumber })
+    if (username) conditions.push({ username })
 
     const user = await User.findOne({
       where: { [Op.or]: conditions }
@@ -31,8 +39,30 @@ const activeResident = async (req, res) => {
       return res.status(400).json({ message: 'User not found' })
     }
 
-    const token = jwtToken(user.userId)
-    res.status(200).json({ user, token })
+    const conditionsResident = []
+
+    if (idcard) conditionsResident.push({ idcard })
+    if (phonenumber) conditionsResident.push({ phonenumber })
+
+    const resident = await Resident.findOne({
+      where: { [Op.or]: conditionsResident }
+    })
+
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
+    }
+
+    if (resident.userId !== user.userId) {
+      return res.status(400).json({ message: 'Invalid resident' })
+    }
+
+    await User.update(conditions, { where: { userId: user.userId } })
+    conditionsResident.push({ active: 'active' })
+    await Resident.update(conditionsResident, {
+      where: { residentId: resident.residentId }
+    })
+
+    res.status(200).json({ message: 'Resident activated' })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -41,45 +71,48 @@ const activeResident = async (req, res) => {
 
 const loginResident = async (req, res) => {
   try {
-    const { email, idcard, phonenumber, password } = req.body
+    const { username, password, email, phonenumber, idcard } = req.body
 
-    if (!email && !idcard && !phonenumber) {
-      return res
-        .status(400)
-        .json({ message: 'Email, ID card or phone number is required' })
+    if ((!username && !email && !phonenumber && !idcard) || !password) {
+      return res.status(400).json({
+        message: 'Username/email/phonenumber/idcard and password are required'
+      })
     }
 
-    if (!password) {
-      return res.status(400).json({ message: 'Password is required' })
-    }
+    const whereCondition = {}
 
-    if (email && !validator.isEmail(email)) {
-      return res.status(400).json({ message: 'Invalid email' })
-    }
-
-    if (phonenumber && !validator.isMobilePhone(phonenumber, 'vi-VN')) {
-      return res.status(400).json({ message: 'Invalid phone number' })
-    }
-
-    const conditions = []
-    if (email) conditions.push({ email })
-    if (idcard) conditions.push({ idcard })
-    if (phonenumber) conditions.push({ phonenumber })
+    if (username) whereCondition.username = username
+    if (email) whereCondition.email = email
 
     const user = await User.findOne({
-      where: { [Op.or]: conditions }
+      where: {
+        [Op.or]: [whereCondition]
+      }
     })
+
+    const whereConditionResident = {}
+    if (idcard) whereConditionResident.idcard = idcard
+    if (phonenumber) whereConditionResident.phonenumber = phonenumber
+
+    const resident = await Resident.findOne({
+      [Op.or]: [whereConditionResident]
+    })
+
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
+    }
 
     if (!user) {
       return res.status(400).json({ message: 'User not found' })
     }
 
-    const isMatch = await bcrypt.compare(password, user.password)
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Incorrect password' })
+    const match = await bcrypt.compare(password, user.password)
+    if (!match) {
+      return res.status(400).json({ message: 'Invalid password' })
     }
 
     const token = jwtToken(user.userId)
+
     res.status(200).json({ user, token })
   } catch (error) {
     console.log(error)
@@ -87,4 +120,4 @@ const loginResident = async (req, res) => {
   }
 }
 
-module.exports = { loginResident }
+module.exports = { loginResident, activeResident }

@@ -36,7 +36,8 @@ const {
   getAllApartments,
   getApartmentById,
   createApartment,
-  updateApartment
+  updateApartment,
+  deleteApartment
 } = require('../Controller/AdminController/Apartment')
 
 router.post('/register', registerAdmin)
@@ -74,5 +75,6 @@ router.get('/apartment', getAllApartments)
 router.get('/apartment/:id', getApartmentById)
 router.post('/apartment', createApartment)
 router.put('/apartment/:id', updateApartment)
+router.delete('/apartment/:id', deleteApartment)
 
 module.exports = router

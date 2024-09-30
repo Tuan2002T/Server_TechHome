@@ -1,4 +1,4 @@
-const { Apartment } = require('../../Model/ModelDefinition')
+const { Apartment, Floor } = require('../../Model/ModelDefinition')
 
 const getAllApartments = async (req, res) => {
   try {
@@ -31,17 +31,26 @@ const getApartmentById = async (req, res) => {
 
 const createApartment = async (req, res) => {
   try {
-    const { apartmentNumber, floorId } = req.body
+    const { apartmentNumber, floorId, apartmentType } = req.body
 
-    if (!apartmentNumber || !floorId) {
+    if (!apartmentNumber || !floorId || !apartmentType) {
       return res
         .status(400)
         .json({ message: 'Apartment number and floorId is required' })
     }
 
+    const floor = await Floor.findOne({
+      where: { floorId }
+    })
+
+    if (!floor) {
+      return res.status(400).json({ message: 'Floor not found' })
+    }
+
     const newApartment = {
       apartmentNumber,
-      floorId
+      floorId,
+      apartmentType
     }
 
     await Apartment.create(newApartment)
@@ -55,7 +64,7 @@ const createApartment = async (req, res) => {
 const updateApartment = async (req, res) => {
   try {
     const apartmentId = req.params.id
-    const { apartmentNumber, floorId } = req.body
+    const { apartmentNumber, floorId, apartmentImage } = req.body // Lấy các trường từ yêu cầu
 
     const apartment = await Apartment.findOne({
       where: { apartmentId }
@@ -65,9 +74,24 @@ const updateApartment = async (req, res) => {
       return res.status(400).json({ message: 'Apartment not found' })
     }
 
-    const updatedApartment = {
-      apartmentNumber,
-      floorId
+    // Tạo đối tượng cập nhật
+    const updatedApartment = {}
+
+    if (apartmentNumber) {
+      updatedApartment.apartmentNumber = apartmentNumber
+    }
+
+    if (floorId) {
+      updatedApartment.floorId = floorId
+    }
+
+    if (apartmentImage) {
+      updatedApartment.apartmentImage = apartmentImage
+    }
+
+    // Nếu không có gì để cập nhật, trả về thông báo
+    if (Object.keys(updatedApartment).length === 0) {
+      return res.status(400).json({ message: 'No fields to update' })
     }
 
     await Apartment.update(updatedApartment, {
@@ -81,9 +105,48 @@ const updateApartment = async (req, res) => {
   }
 }
 
+const getApartmentByFloorId = async (req, res) => {
+  try {
+    const floorId = req.params.id
+    const apartments = await Apartment.findAll({
+      where: { floorId }
+    })
+
+    res.status(200).json(apartments)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+const deleteApartment = async (req, res) => {
+  try {
+    const apartmentId = req.params.id
+
+    const apartment = await Apartment.findOne({
+      where: { apartmentId }
+    })
+
+    if (!apartment) {
+      return res.status(400).json({ message: 'Apartment not found' })
+    }
+
+    await Apartment.destroy({
+      where: { apartmentId }
+    })
+
+    res.status(200).json({ message: 'Apartment deleted' })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 module.exports = {
   getAllApartments,
   getApartmentById,
   createApartment,
-  updateApartment
+  updateApartment,
+  getApartmentByFloorId,
+  deleteApartment
 }

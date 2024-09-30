@@ -6,6 +6,12 @@ const userModel = {
     autoIncrement: true,
     primaryKey: true
   },
+  avatar: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue:
+      'https://techhomearchive.s3.ap-southeast-1.amazonaws.com/defautavatar.jpg'
+  },
   fullname: {
     type: DataTypes.STRING,
     allowNull: false
