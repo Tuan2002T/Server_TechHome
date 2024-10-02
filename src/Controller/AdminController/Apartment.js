@@ -1,4 +1,4 @@
-const { Apartment, Floor } = require('../../Model/ModelDefinition')
+const { Apartment, Floor, Resident } = require('../../Model/ModelDefinition')
 
 const getAllApartments = async (req, res) => {
   try {
@@ -105,20 +105,6 @@ const updateApartment = async (req, res) => {
   }
 }
 
-const getApartmentByFloorId = async (req, res) => {
-  try {
-    const floorId = req.params.id
-    const apartments = await Apartment.findAll({
-      where: { floorId }
-    })
-
-    res.status(200).json(apartments)
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
-  }
-}
-
 const deleteApartment = async (req, res) => {
   try {
     const apartmentId = req.params.id
@@ -142,11 +128,59 @@ const deleteApartment = async (req, res) => {
   }
 }
 
+const getResidentByApartmentId = async (req, res) => {
+  try {
+    const apartmentId = req.params.id
+
+    // Kiểm tra xem căn hộ có tồn tại không
+    const apartment = await Apartment.findOne({
+      where: { apartmentId }
+    })
+
+    if (!apartment) {
+      return res.status(400).json({ message: 'Apartment not found' })
+    }
+
+    // Tìm tất cả cư dân thông qua bảng ResidentApartments
+    const apartmentResidents = await Resident.findAll({
+      include: [
+        {
+          model: Apartment,
+          where: { apartmentId }, // Chỉ lấy cư dân của căn hộ này
+          through: {
+            attributes: [] // Nếu không cần thuộc tính từ bảng trung gian
+          }
+        }
+      ]
+    })
+
+    if (apartmentResidents.length === 0) {
+      return res.status(400).json({ message: 'No residents found' })
+    }
+
+    const residents = apartmentResidents.map((resident) => {
+      return {
+        residentId: resident.id, // Hoặc resident.residentId tùy thuộc vào định nghĩa mô hình
+        userId: resident.userId,
+        residentName: resident.residentName,
+        idcard: resident.idcard,
+        phonenumber: resident.phonenumber,
+        email: resident.email
+      }
+    })
+
+    res.status(200).json(residents)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 module.exports = {
   getAllApartments,
   getApartmentById,
   createApartment,
   updateApartment,
-  getApartmentByFloorId,
+  getResidentByApartmentId,
   deleteApartment
 }

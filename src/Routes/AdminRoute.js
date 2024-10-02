@@ -37,8 +37,13 @@ const {
   getApartmentById,
   createApartment,
   updateApartment,
-  deleteApartment
+  deleteApartment,
+  getResidentByApartmentId
 } = require('../Controller/AdminController/Apartment')
+const {
+  getAllResidents,
+  getResidentById
+} = require('../Controller/AdminController/Resident')
 
 router.post('/register', registerAdmin)
 router.post('/login', loginAdmin)
@@ -68,7 +73,6 @@ router.get('/floor', getAllFloors)
 router.get('/floor/:id', getFloorById)
 router.post('/floor', createFloor)
 router.put('/floor/:id', updateFloor)
-router.get('/floor/apartment/:id', getApartmentByFloorId)
 
 // manage apartment
 router.get('/apartment', getAllApartments)
@@ -76,5 +80,10 @@ router.get('/apartment/:id', getApartmentById)
 router.post('/apartment', createApartment)
 router.put('/apartment/:id', updateApartment)
 router.delete('/apartment/:id', deleteApartment)
+router.get('/apartment/resident/:id', getResidentByApartmentId)
+
+// manage resident
+router.get('/resident', getAllResidents)
+router.get('/resident/:id', getResidentById)
 
 module.exports = router

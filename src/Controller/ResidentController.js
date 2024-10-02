@@ -71,53 +71,85 @@ const activeResident = async (req, res) => {
 
 const loginResident = async (req, res) => {
   try {
-    const { username, password, email, phonenumber, idcard } = req.body
+    const { username, password, email, phonenumber, idcard } = req.body;
 
     if ((!username && !email && !phonenumber && !idcard) || !password) {
       return res.status(400).json({
-        message: 'Username/email/phonenumber/idcard and password are required'
-      })
+        message: 'Username, email, phonenumber, idcard và password là bắt buộc'
+      });
     }
 
-    const whereCondition = {}
+    let user;
+    let resident;
 
-    if (username) whereCondition.username = username
-    if (email) whereCondition.email = email
+    // Nếu nhập username hoặc email, tìm kiếm User trước
+    if (username || email) {
+      user = await User.findOne({
+        where: {
+          [Op.or]: [
+            username ? { username } : undefined,
+            email ? { email } : undefined
+          ].filter(Boolean)
+        }
+      });
 
-    const user = await User.findOne({
-      where: {
-        [Op.or]: [whereCondition]
+      if (!user) {
+        return res.status(400).json({ message: 'User does not exist' });
       }
-    })
 
-    const whereConditionResident = {}
-    if (idcard) whereConditionResident.idcard = idcard
-    if (phonenumber) whereConditionResident.phonenumber = phonenumber
+      resident = await Resident.findOne({
+        where: {
+          [Op.or]: [
+            idcard ? { idcard } : undefined,
+            phonenumber ? { phonenumber } : undefined,
+            user.userId ? { userId: user.userId } : undefined
+          ].filter(Boolean)
+        }
+      });
 
-    const resident = await Resident.findOne({
-      [Op.or]: [whereConditionResident]
-    })
-
-    if (!resident) {
-      return res.status(400).json({ message: 'Resident not found' })
+      if (!resident) {
+        return res.status(400).json({ message: 'Resident does not exist' });
+      }
     }
 
-    if (!user) {
-      return res.status(400).json({ message: 'User not found' })
+    if (phonenumber || idcard) {
+      resident = await Resident.findOne({
+        where: {
+          [Op.or]: [
+            idcard ? { idcard } : undefined,
+            phonenumber ? { phonenumber } : undefined
+          ].filter(Boolean)
+        }
+      });
+
+      if (!resident) {
+        return res.status(400).json({ message: 'Resident does not exist' });
+      }
+
+      user = await User.findOne({
+        where: {
+          userId: resident.userId
+        }
+      });
+
+      if (!user) {
+        return res.status(400).json({ message: 'User does not exist' });
+      }
     }
 
-    const match = await bcrypt.compare(password, user.password)
+    const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(400).json({ message: 'Invalid password' })
+      return res.status(400).json({ message: 'Password is incorrect' });
     }
 
-    const token = jwtToken(user.userId)
+    const token = jwtToken(user.userId);
 
-    res.status(200).json({ user, token })
+    res.status(200).json({ user, token });
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
   }
-}
+};
+
 
 module.exports = { loginResident, activeResident }

@@ -161,3 +161,34 @@ INSERT INTO "Payments" ("paymentAmount", "paymentDate", "paymentStatus", "create
 (900.00, '2024-09-06', 'Pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6),
 (1150.00, '2024-09-07', 'Paid', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7),
 (1050.00, '2024-09-08', 'Overdue', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 8);
+
+
+
+SELECT 
+  r."id" AS resident_id,
+  r."phonenumber",
+  r."idcard",
+  r."active",
+  u."fullname",
+  u."username",
+  u."email",
+  a."apartmentNumber",
+  a."apartmentType",
+  f."floorNumber",
+  b."buildingName",
+  b."buildingAddress"
+FROM 
+  "Residents" r
+JOIN 
+  "Users" u ON r."userId" = u."userId"
+JOIN 
+  "ResidentApartments" ra ON ra."residentId" = r."id"
+JOIN 
+  "Apartments" a ON ra."apartmentId" = a."id"
+JOIN 
+  "Floors" f ON a."floorId" = f."id"
+JOIN 
+  "Buildings" b ON f."buildingId" = b."id"
+WHERE 
+  r."id" = 1;
+
