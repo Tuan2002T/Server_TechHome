@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const validator = require('validator')
 const { User, Resident } = require('../Model/ModelDefinition')
 const { Op } = require('sequelize')
+const { bucketName, uploadToS3, deleteFromS3 } = require('../AWS/s3')
 
 const jwtToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1h' })
@@ -71,16 +72,16 @@ const activeResident = async (req, res) => {
 
 const loginResident = async (req, res) => {
   try {
-    const { username, password, email, phonenumber, idcard } = req.body;
+    const { username, password, email, phonenumber, idcard } = req.body
 
     if ((!username && !email && !phonenumber && !idcard) || !password) {
       return res.status(400).json({
         message: 'Username, email, phonenumber, idcard và password là bắt buộc'
-      });
+      })
     }
 
-    let user;
-    let resident;
+    let user
+    let resident
 
     // Nếu nhập username hoặc email, tìm kiếm User trước
     if (username || email) {
@@ -91,10 +92,10 @@ const loginResident = async (req, res) => {
             email ? { email } : undefined
           ].filter(Boolean)
         }
-      });
+      })
 
       if (!user) {
-        return res.status(400).json({ message: 'User does not exist' });
+        return res.status(400).json({ message: 'User does not exist' })
       }
 
       resident = await Resident.findOne({
@@ -105,10 +106,10 @@ const loginResident = async (req, res) => {
             user.userId ? { userId: user.userId } : undefined
           ].filter(Boolean)
         }
-      });
+      })
 
       if (!resident) {
-        return res.status(400).json({ message: 'Resident does not exist' });
+        return res.status(400).json({ message: 'Resident does not exist' })
       }
     }
 
@@ -120,36 +121,110 @@ const loginResident = async (req, res) => {
             phonenumber ? { phonenumber } : undefined
           ].filter(Boolean)
         }
-      });
+      })
 
       if (!resident) {
-        return res.status(400).json({ message: 'Resident does not exist' });
+        return res.status(400).json({ message: 'Resident does not exist' })
       }
 
       user = await User.findOne({
         where: {
           userId: resident.userId
         }
-      });
+      })
 
       if (!user) {
-        return res.status(400).json({ message: 'User does not exist' });
+        return res.status(400).json({ message: 'User does not exist' })
       }
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(password, user.password)
     if (!match) {
-      return res.status(400).json({ message: 'Password is incorrect' });
+      return res.status(400).json({ message: 'Password is incorrect' })
     }
 
-    const token = jwtToken(user.userId);
+    const token = jwtToken(user.userId)
 
-    res.status(200).json({ user, token });
+    res.status(200).json({ user, resident, token })
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error(error)
+    res.status(500).json({ message: 'Internal server error' })
   }
-};
+}
+
+const updateResident = async (req, res) => {
+  try {
+    const residentId = req.params.id
+    const { fullname, email, password, idcard, phonenumber, username } = req.body
+    const avatar = req.file
+
+    if (!residentId) {
+      return res.status(400).json({ message: 'Resident ID is required' })
+    }
+
+    const resident = await Resident.findOne({
+      where: { residentId }
+    })
+
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
+    }
+
+    const user = await User.findOne({
+      where: {
+        [Op.or]: [{ userId: resident.userId }]
+      }
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
+    if (fullname) {
+      user.fullname = fullname
+    }
+
+    if (username) {
+      user.username = username
+    }
+
+    if (email) {
+      user.email = email
+    }
+
+    if (password) {
+      user.password = await bcrypt.hash(password, 10)
+    }
+
+    if (idcard) {
+      resident.idcard = idcard
+    }
+
+    if (phonenumber) {
+      resident.phonenumber = phonenumber
+    }
+
+    if (avatar) {
+      if (user.avatar) {
+        await deleteFromS3(user.avatar, bucketName)
+      }
+      const data = await uploadToS3(avatar, bucketName, 'user/')
+      console.log('data', data)
+      user.avatar = data
+    }
+
+    await user.save()
+    await resident.save()
+
+    res.status(200).json({
+      resident,
+      user
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
 
 
-module.exports = { loginResident, activeResident }
+module.exports = { loginResident, activeResident, updateResident }

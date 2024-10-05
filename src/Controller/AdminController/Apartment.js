@@ -1,14 +1,16 @@
 const { Apartment, Floor, Resident } = require('../../Model/ModelDefinition')
 
 const getAllApartments = async (req, res) => {
-  try {
-    const apartments = await Apartment.findAll()
+    try {
 
-    res.status(200).json(apartments)
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
-  }
+        const apartments = await Apartment.findAll()
+        console.log('apartments');
+        
+        res.status(200).json(apartments)
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: 'Internal server error' })
+    }
 }
 
 const getApartmentById = async (req, res) => {

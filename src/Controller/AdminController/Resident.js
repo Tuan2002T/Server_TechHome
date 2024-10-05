@@ -13,7 +13,7 @@ const getAllResidents = async (req, res) => {
       ]
     })
 
-    res.status(200).json({ residents })
+    res.status(200).json(residents)
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -38,7 +38,7 @@ const getResidentById = async (req, res) => {
       return res.status(400).json({ message: 'Resident not found' })
     }
 
-    res.status(200).json({ resident })
+    res.status(200).json(resident)
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

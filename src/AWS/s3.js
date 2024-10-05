@@ -2,8 +2,6 @@ const multer = require('multer')
 const AWS = require('aws-sdk')
 const path = require('path')
 
-const fs = require('fs')
-
 process.env.AWS_SDK_JS_SUPPRESS_MAINTENANCE_MODE_MESSAGE = '1'
 
 AWS.config.update({
@@ -40,8 +38,59 @@ function checkFileType(file, callback) {
   return callback('Chỉ chấp nhận file ảnh, video hoặc tài liệu!')
 }
 
+const uploadToS3 = async (file, bucketName, folder = '') => {
+  if (!file) {
+    throw new Error('No file provided for upload')
+  }
+
+  const fileName = `${folder}avatar.${Date.now()}.${file.originalname.split('.').pop()}`
+
+  const params = {
+    Bucket: bucketName,
+    Key: fileName,
+    Body: file.buffer,
+    ContentType: file.mimetype
+  }
+
+  try {
+    const data = await s3.upload(params).promise()
+    return data.Location
+  } catch (error) {
+    throw new Error(`Error uploading file: ${error.message}`)
+  }
+}
+
+const deleteFromS3 = async (fileUrl, bucketName) => {
+  if (!fileUrl) {
+    throw new Error('No file URL provided for deletion')
+  }
+
+  // Tách chính xác Key của file từ URL
+  const fileName = fileUrl.split('/').pop() 
+
+  if (!fileName) {
+    throw new Error('Invalid file URL format')
+  }
+
+  const params = {
+    Bucket: bucketName,
+    Key: `user/${fileName}` // Tùy chỉnh nếu file nằm trong folder
+  }
+
+  try {
+    await s3.deleteObject(params).promise()
+    console.log(`File deleted successfully: ${fileName}`)
+  } catch (error) {
+    throw new Error(`Error deleting file: ${error.message}`)
+  }
+}
+
+
+
 module.exports = {
   upload,
   s3,
-  bucketName
+  bucketName,
+  uploadToS3,
+  deleteFromS3
 }

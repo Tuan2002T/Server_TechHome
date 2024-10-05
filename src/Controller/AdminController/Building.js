@@ -3,7 +3,7 @@ const { Building, Admin } = require('../../Model/ModelDefinition')
 const getAllBuildings = async (req, res) => {
   try {
     const buildings = await Building.findAll()
-    res.status(200).json({ buildings })
+    res.status(200).json(buildings)
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -21,7 +21,7 @@ const getBuildingById = async (req, res) => {
       return res.status(400).json({ message: 'Building not found' })
     }
 
-    res.status(200).json({ building })
+    res.status(200).json( building )
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

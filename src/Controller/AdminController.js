@@ -3,9 +3,10 @@ const jwt = require('jsonwebtoken')
 const validator = require('validator')
 const { User, Admin, Resident, Roles } = require('../Model/ModelDefinition')
 const { Op } = require('sequelize')
+const { deleteFromS3, uploadToS3, bucketName } = require('../AWS/s3')
 
 const jwtToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1h' })
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '24h' })
 }
 
 const registerAdmin = async (req, res) => {
@@ -187,4 +188,73 @@ const registerResident = async (req, res) => {
   }
 }
 
-module.exports = { registerAdmin, loginAdmin, registerResident, getAdminById }
+const updateAdmin = async (req, res) => {
+    try {
+      const adminId = req.params.id
+      const { fullname, username, email, password } = req.body
+      const avatar = req.file
+
+      if (!adminId) {
+        return res.status(400).json({ message: 'Admin ID is required' })
+      }
+
+      const admin = await Admin.findOne({
+        where: { adminId }
+      })
+
+      if (!admin) {
+        return res.status(400).json({ message: 'Admin not found' })
+      }
+
+      const user = await
+        User.findOne({
+          where: {
+            [Op.or]: [{ userId: admin.userId }]
+          }
+        })
+
+        console.log(user);
+        console.log(avatar);
+        
+        
+
+      if (!user) {
+        return res.status(400).json({ message: 'User not found' })
+      }
+
+      if (fullname) {
+        user.fullname = fullname
+      }
+
+      if (username) {
+        user.username = username
+      }
+
+      if (email) {
+        user.email = email
+      }
+
+      if (password) {
+        user.password = await bcrypt.hash(password, 10)
+      }
+
+      if (avatar) {
+        if (user.avatar) {
+          await deleteFromS3(user.avatar, bucketName)
+        }
+
+        user.avatar = await uploadToS3(avatar, bucketName, 'user/')
+      }
+
+      await user.save()
+      await admin.save()
+
+      res.status(200).json({ admin, user })
+    }
+    catch (error) {
+        console.log(error)
+        res.status(500).json({ message: 'Internal server error' })
+    }
+}
+
+module.exports = { registerAdmin, loginAdmin, registerResident, getAdminById, updateAdmin }

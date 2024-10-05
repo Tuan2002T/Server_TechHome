@@ -1,18 +1,27 @@
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { User } = require('../Model/ModelDefinition');
 
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization
-  if (!token) {
-    return res.status(401).json({ message: 'Không tìm thấy mã token' })
-  }
-  jwt.verify(token, process.env.JWT_SECRET, (err, decodedToken) => {
-    if (err) {
-      return res.status(401).json({ message: 'Token không hợp lệ' })
+const verifyToken = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      throw new Error();
     }
 
-    req.user = decodedToken // Lưu thông tin người dùng từ token vào request để các hàm sau có thể sử dụng
-    next()
-  })
-}
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ where: { userId: decoded.userId } });
+
+    if (!user) {
+      throw new Error();
+    }
+
+    req.token = token;
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).send({ error: 'Vui lòng xác thực.' });
+  }
+};
 
 module.exports = verifyToken
