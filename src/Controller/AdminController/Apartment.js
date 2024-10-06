@@ -1,21 +1,37 @@
-const { Apartment, Floor, Resident } = require('../../Model/ModelDefinition')
+const {
+  Apartment,
+  Floor,
+  Resident,
+  User
+} = require('../../Model/ModelDefinition')
 
 const getAllApartments = async (req, res) => {
-    try {
-
-        const apartments = await Apartment.findAll()
-        console.log('apartments');
-        
-        res.status(200).json(apartments)
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Internal server error' })
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
+
+    const apartments = await Apartment.findAll()
+    console.log('apartments')
+
+    res.status(200).json(apartments)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error1' })
+  }
 }
 
 const getApartmentById = async (req, res) => {
   try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const apartmentId = req.params.id
+    if (!apartmentId) {
+      return res.status(400).json({ message: 'Apartment ID is required' })
+    }
+
     const apartment = await Apartment.findOne({
       where: { apartmentId }
     })
@@ -27,12 +43,16 @@ const getApartmentById = async (req, res) => {
     res.status(200).json(apartment)
   } catch (error) {
     console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
+    res.status(500).json({ message: 'Internal server error2' })
   }
 }
 
 const createApartment = async (req, res) => {
   try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const { apartmentNumber, floorId, apartmentType } = req.body
 
     if (!apartmentNumber || !floorId || !apartmentType) {
@@ -59,12 +79,16 @@ const createApartment = async (req, res) => {
     res.status(201).json({ message: 'Apartment created' })
   } catch (error) {
     console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
+    res.status(500).json({ message: 'Internal server error3' })
   }
 }
 
 const updateApartment = async (req, res) => {
   try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const apartmentId = req.params.id
     const { apartmentNumber, floorId, apartmentImage } = req.body // Lấy các trường từ yêu cầu
 
@@ -103,12 +127,16 @@ const updateApartment = async (req, res) => {
     res.status(200).json({ message: 'Apartment updated' })
   } catch (error) {
     console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
+    res.status(500).json({ message: 'Internal server error4' })
   }
 }
 
 const deleteApartment = async (req, res) => {
   try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const apartmentId = req.params.id
 
     const apartment = await Apartment.findOne({
@@ -132,9 +160,14 @@ const deleteApartment = async (req, res) => {
 
 const getResidentByApartmentId = async (req, res) => {
   try {
+    // Kiểm tra quyền truy cập
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const apartmentId = req.params.id
 
-    // Kiểm tra xem căn hộ có tồn tại không
+    // Tìm căn hộ
     const apartment = await Apartment.findOne({
       where: { apartmentId }
     })
@@ -143,14 +176,14 @@ const getResidentByApartmentId = async (req, res) => {
       return res.status(400).json({ message: 'Apartment not found' })
     }
 
-    // Tìm tất cả cư dân thông qua bảng ResidentApartments
+    // Lấy danh sách cư dân
     const apartmentResidents = await Resident.findAll({
       include: [
         {
           model: Apartment,
-          where: { apartmentId }, // Chỉ lấy cư dân của căn hộ này
+          where: { apartmentId },
           through: {
-            attributes: [] // Nếu không cần thuộc tính từ bảng trung gian
+            attributes: []
           }
         }
       ]
@@ -160,18 +193,72 @@ const getResidentByApartmentId = async (req, res) => {
       return res.status(400).json({ message: 'No residents found' })
     }
 
-    const residents = apartmentResidents.map((resident) => {
-      return {
-        residentId: resident.id, // Hoặc resident.residentId tùy thuộc vào định nghĩa mô hình
-        userId: resident.userId,
-        residentName: resident.residentName,
-        idcard: resident.idcard,
-        phonenumber: resident.phonenumber,
-        email: resident.email
-      }
-    })
+    // Lấy thông tin người dùng cho từng cư dân
+    const residents = await Promise.all(
+      apartmentResidents.map(async (resident) => {
+        const user = await User.findOne({
+          where: { userId: resident.userId }
+        })
+
+        if (!user) {
+          return {
+            residentId: resident.residentId,
+            fullname: null,
+            username: null,
+            idcard: resident.idcard,
+            phonenumber: resident.phonenumber,
+            email: null
+          }
+        }
+
+        return {
+          residentId: resident.residentId,
+          fullname: user.fullname,
+          avatar: user.avatar,
+          username: user.username,
+          idcard: resident.idcard,
+          phonenumber: resident.phonenumber,
+          email: user.email
+        }
+      })
+    )
 
     res.status(200).json(residents)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+const addApartmentandResidentToApartmentDetail = async (req, res) => {
+  try {
+    const { apartmentId, residentId } = req.body
+
+    if (isNaN(apartmentId) || isNaN(residentId)) {
+      return res
+        .status(400)
+        .json({ message: 'Invalid apartmentId or residentId' })
+    }
+
+    const apartment = await Apartment.findOne({
+      where: { apartmentId: apartmentId } // Đảm bảo apartmentId là số
+    })
+
+    if (!apartment) {
+      return res.status(400).json({ message: 'Apartment not found' })
+    }
+
+    const resident = await Resident.findOne({
+      where: { residentId: residentId } // Đảm bảo residentId là số
+    })
+
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
+    }
+
+    await apartment.addResident(resident) // Thêm cư dân vào căn hộ
+
+    res.status(200).json({ message: 'Resident added to apartment' })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -184,5 +271,6 @@ module.exports = {
   createApartment,
   updateApartment,
   getResidentByApartmentId,
-  deleteApartment
+  deleteApartment,
+  addApartmentandResidentToApartmentDetail
 }

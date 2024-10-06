@@ -10,7 +10,7 @@ const sequelize = new Sequelize(
     host: process.env.HOST,
     port: process.env.PORT,
     dialect: 'postgres',
-    logging: console.log
+    logging: false
   }
 )
 
@@ -232,42 +232,6 @@ Event.belongsTo(Building, {
   foreignKey: 'buildingId',
   onDelete: 'CASCADE' // Xóa Building nếu Event bị xóa
 })
-
-// const initializeDefaultAdmin = async () => {
-//   try {
-//     // Kiểm tra xem có admin nào đã tồn tại chưa
-//     const adminExists = await Admin.findOne()
-
-//     if (!adminExists) {
-//       // Tạo role cho admin nếu chưa có
-//       let adminRole = await Roles.findOne({ where: { roleName: 'Admin' } })
-
-//       if (!adminRole) {
-//         adminRole = await Roles.create({ roleName: 'Admin' })
-//       }
-
-//       // Tạo user cho admin
-//       const user = await User.create({
-//         fullname: 'Default Admin',
-//         username: 'admin',
-//         password: 'admin123', // Bạn nên mã hóa mật khẩu trước khi lưu
-//         email: 'admin@techhome.com',
-//         roleId: adminRole.roleId
-//       })
-
-//       // Tạo admin với userId và roleId vừa tạo
-//       await Admin.create({
-//         userId: user.userId
-//       })
-
-//       console.log('Default admin created successfully')
-//     } else {
-//       console.log('Admin already exists')
-//     }
-//   } catch (error) {
-//     console.error('Error initializing default admin:', error)
-//   }
-// }
 
 module.exports = {
   // initializeDefaultAdmin,

@@ -4,59 +4,7 @@ const validator = require('validator')
 const { User, Admin, Resident, Roles } = require('../Model/ModelDefinition')
 const { Op } = require('sequelize')
 const { deleteFromS3, uploadToS3, bucketName } = require('../AWS/s3')
-
-const jwtToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '24h' })
-}
-
-const registerAdmin = async (req, res) => {
-  try {
-    const { fullname, username, password, email } = req.body
-
-    if (!fullname || !username || !password || !email) {
-      return res.status(400).json({ message: 'All fields are required' })
-    }
-
-    const user = await User.findOne({
-      where: {
-        [Op.or]: [{ username: username }, { email: email }]
-      }
-    })
-
-    if (user) {
-      return res
-        .status(400)
-        .json({ message: 'Username or email already exists' })
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    const adminRole = await Roles.findOne({
-      where: { roleName: 'Admin' }
-    })
-
-    if (!adminRole) {
-      return res.status(400).json({ message: 'Role not found' })
-    }
-
-    const newUser = {
-      fullname,
-      username,
-      email,
-      password: hashedPassword,
-      roleId: adminRole.roleId
-    }
-
-    const u = await User.create(newUser)
-
-    await Admin.create({ userId: u.userId })
-
-    res.status(201).json({ message: 'Admin created successfully' })
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
-  }
-}
+const jwtToken = require('../JWT/jwt')
 
 const loginAdmin = async (req, res) => {
   try {
@@ -65,7 +13,7 @@ const loginAdmin = async (req, res) => {
     if (!email && !username && !password) {
       return res
         .status(400)
-        .json({ message: 'Username, email or phone number is required' })
+        .json({ message: 'Username, email, or password is required' })
     }
 
     if (!password) {
@@ -76,20 +24,30 @@ const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email' })
     }
 
-    const conditions = []
-    if (email) conditions.push({ email })
-    if (username) conditions.push({ username })
-
     const user = await User.findOne({
-      where: { [Op.or]: conditions }
+      where: {
+        [Op.and]: [
+          { roleId: 1 }, // Kiểm tra roleId của admin
+          {
+            [Op.or]: [
+              username ? { username } : undefined,
+              email ? { email } : undefined
+            ].filter(Boolean)
+          }
+        ]
+      }
     })
 
     if (!user) {
       return res.status(400).json({ message: 'User not found' })
     }
 
-    if (user.roleId !== 1) {
-      return res.status(400).json({ message: 'User is not an admin' })
+    const admin = await Admin.findOne({
+      where: { userId: user.userId }
+    })
+
+    if (!admin) {
+      return res.status(400).json({ message: 'Admin not found' })
     }
 
     const isMatch = await bcrypt.compare(password, user.password)
@@ -97,11 +55,15 @@ const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Incorrect password' })
     }
 
-    const token = jwtToken(user.userId)
-    res.status(200).json({ user, token })
+    const payload = { user, admin }
+    console.log(payload)
+
+    const token = jwtToken(payload)
+
+    res.status(200).json({ user, admin, token })
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
+    console.error('Error during admin login:', error)
+    res.status(500).json({ message: 'An internal error occurred' })
   }
 }
 
@@ -128,133 +90,72 @@ const getAdminById = async (req, res) => {
   }
 }
 
-const registerResident = async (req, res) => {
+const updateAdmin = async (req, res) => {
   try {
-    const { fullname, username, idcard } = req.body
-    const { adminId } = req.params
+    const { fullname, username, email, password } = req.body
+    const avatar = req.file
 
-    // Kiểm tra xem tất cả các trường có hợp lệ không
-    if (!fullname || !idcard || !username) {
-      return res.status(400).json({ message: 'All fields are required' })
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
-    // Kiểm tra xem admin có tồn tại không
     const admin = await Admin.findOne({
-      where: { userId: adminId }
+      where: { adminId: req.admin.adminId }
     })
 
     if (!admin) {
       return res.status(400).json({ message: 'Admin not found' })
     }
 
-    // Kiểm tra xem vai trò 'resident' có tồn tại không
-    const role = await Roles.findOne({
-      where: { roleName: 'resident' }
-    })
-
-    if (!role) {
-      return res.status(400).json({ message: 'Role not found' })
-    }
-
-    // Kiểm tra xem người dùng đã tồn tại chưa
     const user = await User.findOne({
       where: {
-        username
+        [Op.or]: [{ userId: req.admin.userId }]
       }
     })
 
-    if (user) {
-      return res
-        .status(400)
-        .json({ message: 'Username or ID card already exists' })
+    console.log(user)
+    console.log(avatar)
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
     }
 
-    // Tạo người dùng mới
-    const newUser = {
-      fullname,
-      username,
-      roleId: role.roleId
+    if (fullname) {
+      user.fullname = fullname
     }
 
-    const u = await User.create(newUser)
+    if (username) {
+      user.username = username
+    }
 
-    // Tạo cư dân
-    await Resident.create({ userId: u.userId, idcard })
+    if (email) {
+      user.email = email
+    }
 
-    res.status(201).json({ message: 'Resident created successfully' })
+    if (password) {
+      user.password = await bcrypt.hash(password, 10)
+    }
+
+    if (avatar) {
+      if (user.avatar) {
+        await deleteFromS3(user.avatar, bucketName)
+      }
+
+      user.avatar = await uploadToS3(avatar, bucketName, 'user/')
+    }
+
+    await user.save()
+    await admin.save()
+
+    res.status(200).json({ admin, user })
   } catch (error) {
     console.log(error)
-    res.status(500).json({ error: error.message })
+    res.status(500).json({ message: 'Internal server error' })
   }
 }
 
-const updateAdmin = async (req, res) => {
-    try {
-      const adminId = req.params.id
-      const { fullname, username, email, password } = req.body
-      const avatar = req.file
-
-      if (!adminId) {
-        return res.status(400).json({ message: 'Admin ID is required' })
-      }
-
-      const admin = await Admin.findOne({
-        where: { adminId }
-      })
-
-      if (!admin) {
-        return res.status(400).json({ message: 'Admin not found' })
-      }
-
-      const user = await
-        User.findOne({
-          where: {
-            [Op.or]: [{ userId: admin.userId }]
-          }
-        })
-
-        console.log(user);
-        console.log(avatar);
-        
-        
-
-      if (!user) {
-        return res.status(400).json({ message: 'User not found' })
-      }
-
-      if (fullname) {
-        user.fullname = fullname
-      }
-
-      if (username) {
-        user.username = username
-      }
-
-      if (email) {
-        user.email = email
-      }
-
-      if (password) {
-        user.password = await bcrypt.hash(password, 10)
-      }
-
-      if (avatar) {
-        if (user.avatar) {
-          await deleteFromS3(user.avatar, bucketName)
-        }
-
-        user.avatar = await uploadToS3(avatar, bucketName, 'user/')
-      }
-
-      await user.save()
-      await admin.save()
-
-      res.status(200).json({ admin, user })
-    }
-    catch (error) {
-        console.log(error)
-        res.status(500).json({ message: 'Internal server error' })
-    }
+module.exports = {
+  loginAdmin,
+  getAdminById,
+  updateAdmin
 }
-
-module.exports = { registerAdmin, loginAdmin, registerResident, getAdminById, updateAdmin }

@@ -2,6 +2,10 @@ const { Building, Admin } = require('../../Model/ModelDefinition')
 
 const getAllBuildings = async (req, res) => {
   try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const buildings = await Building.findAll()
     res.status(200).json(buildings)
   } catch (error) {
@@ -13,6 +17,11 @@ const getAllBuildings = async (req, res) => {
 const getBuildingById = async (req, res) => {
   try {
     const buildingId = req.params.id
+
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const building = await Building.findOne({
       where: { buildingId }
     })
@@ -21,7 +30,7 @@ const getBuildingById = async (req, res) => {
       return res.status(400).json({ message: 'Building not found' })
     }
 
-    res.status(200).json( building )
+    res.status(200).json(building)
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -31,26 +40,15 @@ const getBuildingById = async (req, res) => {
 const createBuilding = async (req, res) => {
   try {
     const { buildingName, buildingAddress } = req.body
-    const { adminId } = req.params
 
-    if (!buildingName || !buildingAddress || !adminId) {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    if (!buildingName || !buildingAddress) {
       return res
         .status(400)
         .json({ message: 'Building name and address is required' })
-    }
-
-    if (isNaN(adminId)) {
-      return res
-        .status(400)
-        .json({ message: 'Invalid adminId. It must be an integer.' })
-    }
-
-    const admin = await Admin.findOne({
-      where: { adminId }
-    })
-
-    if (!admin) {
-      return res.status(400).json({ message: 'Admin not found' })
     }
 
     const newBuilding = {
@@ -70,6 +68,10 @@ const updateBuilding = async (req, res) => {
   try {
     const buildingId = req.params.id
     const { buildingName, buildingAddress } = req.body
+
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
 
     const building = await Building.findOne({
       where: { buildingId }

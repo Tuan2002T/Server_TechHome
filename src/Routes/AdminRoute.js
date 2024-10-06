@@ -1,10 +1,9 @@
 const express = require('express')
 const router = express.Router()
+const auth = require('../Middleware/auth')
 
 const {
-  registerAdmin,
   loginAdmin,
-  registerResident,
   getAdminById,
   updateAdmin
 } = require('../Controller/AdminController')
@@ -19,20 +18,23 @@ const {
   getEventById,
   getAllEvents,
   createEvent,
-  updateEvent
+  updateEvent,
+  deleteEvent
 } = require('../Controller/AdminController/Event')
 const {
   getAllServices,
   getServiceById,
   createService,
-  updateService
+  updateService,
+  deleteService
 } = require('../Controller/AdminController/Service')
 const {
   getAllFloors,
   getFloorById,
   createFloor,
   updateFloor,
-  getApartmentByFloorId
+  getApartmentByFloorId,
+  deleteFloor
 } = require('../Controller/AdminController/Floor')
 const {
   getAllApartments,
@@ -40,56 +42,86 @@ const {
   createApartment,
   updateApartment,
   deleteApartment,
-  getResidentByApartmentId
+  getResidentByApartmentId,
+  addApartmentandResidentToApartmentDetail
 } = require('../Controller/AdminController/Apartment')
 const {
   getAllResidents,
-  getResidentById
+  getResidentById,
+  unActiveResident,
+  registerResident
 } = require('../Controller/AdminController/Resident')
-const { updateResident } = require('../Controller/ResidentController')
-const { upload } = require('../AWS/s3')
 
-router.post('/register', registerAdmin)
+const { upload } = require('../AWS/s3')
+router.get('/apartment', auth, (req, res) => {
+  res.status(200).json({ message: 'Apartment endpoint is working' })
+})
+router.get('/building', auth, (req, res) => {
+  res.status(200).json({ message: 'Building endpoint is working' })
+})
+router.get('/event', auth, (req, res) => {
+  res.status(200).json({ message: 'Event endpoint is working' })
+})
+router.get('/floor', auth, (req, res) => {
+  res.status(200).json({ message: 'Floor endpoint is working' })
+})
+router.get('/resident', auth, (req, res) => {
+  res.status(200).json({ message: 'Resident endpoint is working' })
+})
+router.get('/service', auth, (req, res) => {
+  res.status(200).json({ message: 'Service endpoint is working' })
+})
+
 router.post('/login', loginAdmin)
-router.post('/registerResident/:adminId', registerResident)
-router.get('/:id', getAdminById)
-router.put('/:id',upload.single('file'), updateAdmin)
+router.get('/:id', auth, getAdminById)
+router.put('/update', auth, upload.single('file'), updateAdmin)
 
 // manage building
-router.get('/building/getAll', getAllBuildings)
-router.get('/building/:id', getBuildingById)
-router.post('/building/:adminId', createBuilding)
-router.put('/building/:id', updateBuilding)
-router.delete('/building/:id', deleteBuilding)
+router.get('/building/getAll', auth, getAllBuildings)
+router.get('/building/:id', auth, getBuildingById)
+router.post('/building', auth, createBuilding)
+router.put('/building/:id', auth, updateBuilding)
+router.delete('/building/:id', auth, deleteBuilding)
 
 // manage event
-router.get('/event/getAll', getAllEvents)
-router.get('/event/:id', getEventById)
-router.post('/event', createEvent)
-router.put('/event/:id', updateEvent)
+router.get('/event/getAll', auth, getAllEvents)
+router.get('/event/:id', auth, getEventById)
+router.post('/event', auth, createEvent)
+router.put('/event/:id', auth, updateEvent)
+router.delete('/event/:id', auth, deleteEvent)
 
 // manage service
-router.get('/service/getAll', getAllServices)
-router.get('/service/:id', getServiceById)
-router.post('/service', createService)
-router.put('/service/:id', updateService)
+router.get('/service/getAll', auth, getAllServices)
+router.get('/service/:id', auth, getServiceById)
+router.post('/service', auth, createService)
+router.put('/service/:id', auth, updateService)
+router.delete('/service/:id', auth, deleteService)
 
 // manage floor
-router.get('/floor/getAll', getAllFloors)
-router.get('/floor/:id', getFloorById)
-router.post('/floor', createFloor)
-router.put('/floor/:id', updateFloor)
+router.get('/floor/getAll', auth, getAllFloors)
+router.get('/floor/:id', auth, getFloorById)
+router.post('/floor', auth, createFloor)
+router.put('/floor/:id', auth, updateFloor)
+router.delete('/floor/:id', auth, deleteFloor)
+router.get('/floor/apartment/:id', auth, getApartmentByFloorId)
 
 // manage apartment
-router.get('/apartment/getAll', getAllApartments)
-router.get('/apartment/:id', getApartmentById)
-router.post('/apartment', createApartment)
-router.put('/apartment/:id', updateApartment)
-router.delete('/apartment/:id', deleteApartment)
-router.get('/apartment/resident/:id', getResidentByApartmentId)
+router.get('/apartment/getAll', auth, getAllApartments)
+router.get('/apartment/:id', auth, getApartmentById)
+router.post('/apartment', auth, createApartment)
+router.put('/apartment/:id', auth, updateApartment)
+router.delete('/apartment/:id', auth, deleteApartment)
+router.get('/apartment/resident/:id', auth, getResidentByApartmentId)
+router.put(
+  '/apartment/resident/addApartmentandResidentToApartmentDetail',
+  auth,
+  addApartmentandResidentToApartmentDetail
+)
 
 // manage resident
-router.get('/resident/getAll', getAllResidents)
-router.get('/resident/:id', getResidentById)
+router.get('/resident/getAll', auth, getAllResidents)
+router.get('/resident/:id', auth, getResidentById)
+router.put('/resident/:id', auth, unActiveResident)
+router.post('/registerResident', auth, registerResident)
 
 module.exports = router

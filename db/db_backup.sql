@@ -1,5 +1,9 @@
 SELECT * FROM "Roles"
-
+SELECT * FROM "Events"
+SELECT * FROM "Services"
+SELECT * FROM "Floors"
+SELECT * FROM "Apartments"
+SELECT * FROM "Residents"
 INSERT INTO "Roles" ("roleName", "createdAt", "updatedAt") VALUES
 ('Admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('Resident', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

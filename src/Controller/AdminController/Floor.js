@@ -30,6 +30,10 @@ const getFloorById = async (req, res) => {
 
 const createFloor = async (req, res) => {
   try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const { floorNumber, buildingId } = req.body
 
     if (!floorNumber || !buildingId) {
@@ -53,6 +57,10 @@ const createFloor = async (req, res) => {
 
 const updateFloor = async (req, res) => {
   try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
     const floorId = req.params.id
     const { floorNumber, buildingId } = req.body
 
@@ -82,6 +90,9 @@ const updateFloor = async (req, res) => {
 
 const getApartmentByFloorId = async (req, res) => {
   try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
     const floorId = req.params.id
     const floor = await Floor.findOne({
       where: { floorId }
@@ -99,10 +110,37 @@ const getApartmentByFloorId = async (req, res) => {
   }
 }
 
+const deleteFloor = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+    const floorId = req.params.id
+
+    const floor = await Floor.findOne({
+      where: { floorId }
+    })
+
+    if (!floor) {
+      return res.status(400).json({ message: 'Floor not found' })
+    }
+
+    await Floor.destroy({
+      where: { floorId }
+    })
+
+    res.status(200).json({ message: 'Floor deleted' })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 module.exports = {
   getAllFloors,
   getFloorById,
   createFloor,
   updateFloor,
-  getApartmentByFloorId
+  getApartmentByFloorId,
+  deleteFloor
 }

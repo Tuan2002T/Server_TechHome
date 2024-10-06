@@ -19,7 +19,6 @@ app.listen(3000, () => {
 
 sequelize.sync({ alter: true }).then(() => {
   console.log('Database is connected')
-  // initializeDefaultAdmin()
 })
 app.get('/', (req, res) => {
   res.send('Welcome to TechHome...!')

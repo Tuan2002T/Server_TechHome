@@ -1,27 +1,35 @@
-const jwt = require('jsonwebtoken');
-const { User } = require('../Model/ModelDefinition');
+const jwt = require('jsonwebtoken')
 
-const verifyToken = async (req, res, next) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      throw new Error();
-    }
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findOne({ where: { userId: decoded.userId } });
-
-    if (!user) {
-      throw new Error();
-    }
-
-    req.token = token;
-    req.user = user;
-    next();
-  } catch (error) {
-    res.status(401).send({ error: 'Vui lòng xác thực.' });
+  if (!token) {
+    return res.status(401).json({ message: 'Access token is required' })
   }
-};
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' })
+    }
+
+    const { user, resident, admin } = decoded.payload
+
+    const userRoleId = user.roleId
+
+    if (userRoleId === 1) {
+      req.user = user
+      req.admin = admin
+      req.role = 'admin'
+    } else if (userRoleId === 2) {
+      req.user = user
+      req.resident = resident
+      req.role = 'resident'
+    } else {
+      return res.status(403).json({ message: 'Unauthorized access' })
+    }
+
+    next()
+  })
+}
 
 module.exports = verifyToken
