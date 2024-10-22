@@ -1,5 +1,10 @@
 const { Op } = require('sequelize')
-const { Resident, User, Roles } = require('../../Model/ModelDefinition')
+const {
+  Resident,
+  User,
+  Roles,
+  Apartment
+} = require('../../Model/ModelDefinition')
 
 const getAllResidents = async (req, res) => {
   try {
@@ -84,9 +89,9 @@ const registerResident = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
-    const { fullname, username, idcard } = req.body
+    const { fullname, username, idcard, apartment } = req.body
 
-    if (!fullname || !idcard || !username) {
+    if (!fullname || !idcard || !username || !apartment) {
       return res.status(400).json({ message: 'All fields are required' })
     }
 
@@ -108,6 +113,24 @@ const registerResident = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'Username or ID card already exists' })
+    }
+
+    const resident = await Resident.findOne({
+      where: { idcard }
+    })
+
+    if (resident) {
+      return res
+        .status(400)
+        .json({ message: 'Username or ID card already exists' })
+    }
+
+    const am = await Apartment.findOne({
+      where: { aparmentId: apartment }
+    })
+
+    if (!am) {
+      return res.status(400).json({ message: 'Apartment not found' })
     }
 
     const newUser = {

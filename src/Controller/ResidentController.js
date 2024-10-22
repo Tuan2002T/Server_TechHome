@@ -5,6 +5,8 @@ const { User, Resident } = require('../Model/ModelDefinition')
 const { Op } = require('sequelize')
 const { bucketName, uploadToS3, deleteFromS3 } = require('../AWS/s3')
 const jwtToken = require('../JWT/jwt')
+const sendOTP = require('../OTP/sendOTP')
+const redisClient = require('../Redis/redis')
 
 const activeResident = async (req, res) => {
   try {
@@ -49,6 +51,8 @@ const activeResident = async (req, res) => {
     if (!resident) {
       return res.status(400).json({ message: 'Resident not found' })
     }
+
+    console.log(user, resident)
 
     if (resident.userId !== user.userId) {
       return res.status(400).json({ message: 'Invalid resident' })
@@ -114,6 +118,10 @@ const loginResident = async (req, res) => {
       if (!resident) {
         return res.status(400).json({ message: 'Resident does not exist' })
       }
+
+      if (resident.active === false) {
+        return res.status(400).json({ message: 'Resident is not active' })
+      }
     }
 
     if (phonenumber || idcard) {
@@ -130,6 +138,9 @@ const loginResident = async (req, res) => {
         return res.status(400).json({ message: 'Resident does not exist' })
       }
 
+      if (resident.active === false) {
+        return res.status(400).json({ message: 'Resident is not active' })
+      }
       user = await User.findOne({
         where: {
           [Op.and]: [{ userId: resident.userId }, { roleId: 2 }]
@@ -150,6 +161,7 @@ const loginResident = async (req, res) => {
 
     const payload = { user, resident }
     const token = jwtToken(payload)
+    console.log('login')
 
     res.status(200).json({ user, resident, token })
   } catch (error) {
@@ -257,4 +269,215 @@ const readToken = async (req, res) => {
   }
 }
 
-module.exports = { loginResident, activeResident, updateResident, readToken }
+const getResidentNoActiveByIdcard = async (req, res) => {
+  try {
+    const idcard = req.params.idcard
+
+    if (!idcard) {
+      return res.status(400).json({ message: 'ID card is required' })
+    }
+    const resident = await Resident.findOne({
+      where: {
+        [Op.and]: [{ idcard }, { active: false }]
+      }
+    })
+
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
+    }
+
+    const user = await User.findOne({
+      where: { userId: resident.userId }
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+    const mergedData = {
+      ...user.dataValues, // Dữ liệu từ user
+      ...resident.dataValues // Dữ liệu từ resident
+    }
+
+    res.status(200).json(mergedData)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+const generateOTP = () => {
+  // Tạo mã OTP ngẫu nhiên từ 100000 đến 999999
+  return Math.floor(100000 + Math.random() * 900000).toString()
+}
+
+const sentOTPHandler = async (req, res) => {
+  const { to } = req.body // Lấy chỉ số liên hệ từ yêu cầu, không lấy otp
+
+  if (!to) {
+    return res.status(400).json({
+      success: false,
+      error: 'Địa chỉ liên hệ là bắt buộc.'
+    })
+  }
+
+  const phoneRegex = /^\+?[0-9]{7,15}$/
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  let validatedType = ''
+  let id = ''
+
+  if (phoneRegex.test(to)) {
+    validatedType = 'sms'
+
+    const phone = to.replace('+84', '0')
+
+    const resident = await Resident.findOne({
+      where: { phonenumber: phone }
+    })
+
+    if (!resident) {
+      return res.status(400).json({
+        success: false,
+        error: 'Không tìm thấy cư dân với số điện thoại này.'
+      })
+    }
+
+    id = resident.residentId
+  } else if (emailRegex.test(to)) {
+    validatedType = 'email'
+
+    const user = await User.findOne({
+      where: { email: to }
+    })
+
+    if (user) {
+      const resident = await Resident.findOne({
+        where: { userId: user.userId }
+      })
+
+      if (!resident) {
+        return res.status(400).json({
+          success: false,
+          error: 'Không tìm thấy cư dân với email này.'
+        })
+      }
+
+      id = resident.residentId
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'Không tìm thấy người dùng với email này.'
+      })
+    }
+  } else {
+    return res.status(400).json({
+      success: false,
+      error:
+        'Địa chỉ liên hệ không hợp lệ. Vui lòng nhập số điện thoại hoặc email hợp lệ.'
+    })
+  }
+
+  // Tạo mã OTP ngẫu nhiên
+  const otp = generateOTP()
+
+  console.log(validatedType)
+
+  try {
+    const response = await sendOTP(to, otp, validatedType, id)
+    return res.status(200).json({ success: true, response })
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error.message })
+  }
+}
+
+const verifyOTP = async (req, res) => {
+  const { id, otp } = req.body
+
+  if (!id || !otp) {
+    return res.status(400).json({ message: 'ID và mã OTP là bắt buộc.' })
+  }
+
+  const storedOTP =
+    (await redisClient.get(`sms:${id}`)) ||
+    (await redisClient.get(`email:${id}`))
+
+  if (!storedOTP) {
+    return res
+      .status(400)
+      .json({ success: false, message: 'Mã OTP không hợp lệ hoặc đã hết hạn.' })
+  }
+
+  if (storedOTP === otp) {
+    // ;(await redisClient.del(`sms:${id}`)) ||
+    //   (await redisClient.del(`email:${id}`))
+    return res
+      .status(200)
+      .json({ success: true, message: 'Xác minh thành công.' })
+  } else {
+    return res
+      .status(400)
+      .json({ success: false, message: 'Mã OTP không chính xác.' })
+  }
+}
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { residentId, password, otp } = req.body
+    console.log(residentId, password, otp)
+
+    if (!residentId || !password || !otp) {
+      return res
+        .status(400)
+        .json({ message: 'Resident ID, password, and OTP are required.' })
+    }
+
+    // Kiểm tra mã OTP trước khi thay đổi mật khẩu
+    const storedOTP =
+      (await redisClient.get(`sms:${residentId}`)) ||
+      (await redisClient.get(`email:${residentId}`))
+
+    if (!storedOTP) {
+      return res
+        .status(400)
+        .json({ message: 'Mã OTP không hợp lệ hoặc đã hết hạn.' })
+    }
+
+    if (storedOTP !== otp) {
+      return res.status(400).json({ message: 'Mã OTP không chính xác.' })
+    }
+
+    ;(await redisClient.del(`sms:${residentId}`)) ||
+      (await redisClient.del(`email:${residentId}`))
+
+    const resident = await Resident.findOne({ where: { residentId } })
+
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
+    }
+
+    const user = await User.findOne({ where: { userId: resident.userId } })
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
+    user.password = await bcrypt.hash(password, 10)
+    await user.save()
+
+    return res.status(200).json({ message: 'Password updated successfully.' })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = {
+  loginResident,
+  activeResident,
+  updateResident,
+  readToken,
+  getResidentNoActiveByIdcard,
+  sentOTPHandler,
+  verifyOTP,
+  forgotPassword
+}
