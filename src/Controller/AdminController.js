@@ -9,6 +9,7 @@ const jwtToken = require('../JWT/jwt')
 const loginAdmin = async (req, res) => {
   try {
     const { username, email, password } = req.body
+    console.log(username, email, password)
 
     if (!email && !username && !password) {
       return res
@@ -39,7 +40,7 @@ const loginAdmin = async (req, res) => {
     })
 
     if (!user) {
-      return res.status(400).json({ message: 'User not found' })
+      return res.status(400).json({ status: false, message: 'User not found' })
     }
 
     const admin = await Admin.findOne({
@@ -60,7 +61,9 @@ const loginAdmin = async (req, res) => {
 
     const token = jwtToken(payload)
 
-    res.status(200).json({ user, admin, token })
+    res
+      .status(200)
+      .json({ status: true, message: 'success', data: { user, admin, token } })
   } catch (error) {
     console.error('Error during admin login:', error)
     res.status(500).json({ message: 'An internal error occurred' })

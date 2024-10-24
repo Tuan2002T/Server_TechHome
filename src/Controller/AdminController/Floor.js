@@ -3,7 +3,7 @@ const { Floor } = require('../../Model/ModelDefinition')
 const getAllFloors = async (req, res) => {
   try {
     const floors = await Floor.findAll()
-    res.status(200).json(floors)
+    res.status(200).json({ status: true, message: 'success', data: floors })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

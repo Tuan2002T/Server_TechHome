@@ -7,7 +7,7 @@ const getAllBuildings = async (req, res) => {
     }
 
     const buildings = await Building.findAll()
-    res.status(200).json(buildings)
+    res.status(200).json({ status: true, message: 'success', data: buildings })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

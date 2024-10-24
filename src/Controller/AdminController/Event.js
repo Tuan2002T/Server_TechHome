@@ -8,7 +8,7 @@ const getAllEvents = async (req, res) => {
 
     const events = await Event.findAll()
 
-    res.status(200).json(events)
+    res.status(200).json({status: true, message: 'success', data: events})
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

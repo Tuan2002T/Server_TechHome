@@ -20,6 +20,7 @@
     "multer": "^1.4.5-lts.1",
     "pg": "^8.13.0",
     "sequelize": "^6.37.3",
+    "server_techhome": "file:",
     "validator": "^13.12.0"
   }
 }
