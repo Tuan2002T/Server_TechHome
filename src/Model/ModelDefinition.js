@@ -29,6 +29,8 @@ const rolesModel = require('./Roles.js')
 const serviceModel = require('./ServiceModel.js')
 const userModel = require('./UserModel.js')
 const vehicleModel = require('./VehicleModel.js')
+const billModel = require('./BillModel.js')
+const serviceBookingModel = require('./ServiceBookingsModel.js')
 
 const Admin = sequelize.define('Admin', adminModel)
 const ApartmentDetail = sequelize.define(
@@ -48,193 +50,204 @@ const Roles = sequelize.define('Roles', rolesModel)
 const Service = sequelize.define('Service', serviceModel)
 const User = sequelize.define('User', userModel)
 const Vehicle = sequelize.define('Vehicle', vehicleModel)
+const Bill = sequelize.define('Bill', billModel)
+const ServiceBooking = sequelize.define('ServiceBooking', serviceBookingModel)
 
-// User and Role relationship
 User.belongsTo(Roles, {
   foreignKey: 'roleId',
-  onDelete: 'SET NULL' // Giữ lại User nếu Role bị xóa
+  onDelete: 'SET NULL'
 })
 Roles.hasMany(User, {
   foreignKey: 'roleId',
-  onDelete: 'SET NULL' // Giữ lại Role nếu User bị xóa
+  onDelete: 'SET NULL'
 })
 
-// User and Admin relationship
 User.hasOne(Admin, {
   foreignKey: 'userId',
-  onDelete: 'CASCADE' // Xóa Admin nếu User bị xóa
+  onDelete: 'CASCADE'
 })
 Admin.belongsTo(User, {
   foreignKey: 'userId',
-  onDelete: 'CASCADE' // Xóa User nếu Admin bị xóa
+  onDelete: 'CASCADE'
 })
 
-// User and Resident relationship
 User.hasOne(Resident, {
   foreignKey: 'userId',
-  onDelete: 'SET NULL' // Giữ lại User nếu Resident bị xóa
+  onDelete: 'SET NULL'
 })
 Resident.belongsTo(User, {
   foreignKey: 'userId',
-  onDelete: 'CASCADE' // Xóa User nếu Resident bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Resident and Apartment relationship
+Resident.hasMany(Bill, { foreignKey: 'residentId', onDelete: 'SET NULL' })
+Bill.belongsTo(Resident, { foreignKey: 'residentId', onDelete: 'CASCADE' })
+
 Apartment.belongsToMany(Resident, {
   through: 'ResidentApartments',
   foreignKey: 'apartmentId',
-  onDelete: 'SET NULL' // Giữ lại Resident nếu Apartment bị xóa
+  onDelete: 'SET NULL'
 })
 Resident.belongsToMany(Apartment, {
   through: 'ResidentApartments',
   foreignKey: 'residentId',
-  onDelete: 'SET NULL' // Giữ lại Apartment nếu Resident bị xóa
+  onDelete: 'SET NULL'
 })
 
-// Building and Floor relationship
 Building.hasMany(Floor, {
   foreignKey: 'buildingId',
-  onDelete: 'SET NULL' // Giữ lại Floor nếu Building bị xóa
+  onDelete: 'SET NULL'
 })
 Floor.belongsTo(Building, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE' // Xóa Floor nếu Building bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Building and Service relationship
-Building.hasMany(Service, {
+Building.belongsToMany(Service, {
+  through: 'BuildingServices',
   foreignKey: 'buildingId',
-  onDelete: 'SET NULL' // Giữ lại Service nếu Building bị xóa
-})
-Service.belongsTo(Building, {
-  foreignKey: 'buildingId',
-  onDelete: 'CASCADE' // Xóa Service nếu Building bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Building and Admin relationship
+Service.belongsToMany(Building, {
+  through: 'BuildingServices',
+  foreignKey: 'serviceId',
+  onDelete: 'CASCADE'
+})
+
+Service.hasMany(ServiceBooking, {
+  foreignKey: 'serviceId',
+  onDelete: 'SET NULL'
+})
+ServiceBooking.belongsTo(Service, {
+  foreignKey: 'serviceId',
+  onDelete: 'CASCADE'
+})
+
+Resident.hasMany(ServiceBooking, {
+  foreignKey: 'residentId',
+  onDelete: 'SET NULL'
+})
+ServiceBooking.belongsTo(Resident, {
+  foreignKey: 'residentId',
+  onDelete: 'CASCADE'
+})
+
 Building.hasMany(Admin, {
   foreignKey: 'buildingId',
-  onDelete: 'SET NULL' // Giữ lại Admin nếu Building bị xóa
+  onDelete: 'SET NULL'
 })
 Admin.belongsTo(Building, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE' // Xóa Admin nếu Building bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Floor and Apartment relationship
+Notification.belongsTo(Admin, {
+  foreignKey: 'adminId',
+  onDelete: 'SET NULL'
+})
+Admin.hasMany(Notification, {
+  foreignKey: 'adminId',
+  onDelete: 'SET NULL'
+})
+
 Floor.hasMany(Apartment, {
   foreignKey: 'floorId',
-  onDelete: 'SET NULL' // Giữ lại Apartment nếu Floor bị xóa
+  onDelete: 'SET NULL'
 })
 Apartment.belongsTo(Floor, {
   foreignKey: 'floorId',
-  onDelete: 'CASCADE' // Xóa Floor nếu Apartment bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Apartment and ApartmentDetail relationship
 Apartment.hasOne(ApartmentDetail, {
   foreignKey: 'apartmentId',
-  onDelete: 'CASCADE' // Xóa ApartmentDetail nếu Apartment bị xóa
+  onDelete: 'CASCADE'
 })
 ApartmentDetail.belongsTo(Apartment, {
   foreignKey: 'apartmentId',
-  onDelete: 'CASCADE' // Xóa Apartment nếu ApartmentDetail bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Resident and ApartmentDetail relationship
 Resident.hasMany(ApartmentDetail, {
   foreignKey: 'residentId',
-  onDelete: 'SET NULL' // Giữ lại ApartmentDetail nếu Resident bị xóa
+  onDelete: 'SET NULL'
 })
 ApartmentDetail.belongsTo(Resident, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE' // Xóa Resident nếu ApartmentDetail bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Resident and Vehicle relationship
 Resident.hasMany(Vehicle, {
   foreignKey: 'residentId',
-  onDelete: 'SET NULL' // Giữ lại Vehicle nếu Resident bị xóa
+  onDelete: 'SET NULL'
 })
 Vehicle.belongsTo(Resident, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE' // Xóa Vehicle nếu Resident bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Resident and Complaint relationship
 Resident.hasMany(Complaint, {
   foreignKey: 'residentId',
-  onDelete: 'SET NULL' // Giữ lại Complaint nếu Resident bị xóa
+  onDelete: 'SET NULL'
 })
 Complaint.belongsTo(Resident, {
   foreignKey: 'residentId',
-  onDelete: 'CASCADE' // Xóa Resident nếu Complaint bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Resident and Notification relationship
-Resident.hasMany(Notification, {
+Resident.belongsToMany(Notification, {
+  through: 'ResidentNotifications',
   foreignKey: 'residentId',
-  onDelete: 'SET NULL' // Giữ lại Notification nếu Resident bị xóa
+  onDelete: 'SET NULL'
 })
 Notification.belongsToMany(Resident, {
-  through: 'NotificationResident',
+  through: 'ResidentNotifications',
   foreignKey: 'notificationId',
-  otherKey: 'residentId',
-  onDelete: 'SET NULL' // Giữ lại Notification nếu Resident bị xóa
+  onDelete: 'CASCADE'
 })
 
-// Resident and Payment relationship
-Resident.hasMany(Payment, {
-  foreignKey: 'residentId',
-  onDelete: 'SET NULL' // Giữ lại Payment nếu Resident bị xóa
-})
-Payment.belongsTo(Resident, {
-  foreignKey: 'residentId',
-  onDelete: 'CASCADE' // Xóa Resident nếu Payment bị xóa
-})
-
-// Resident and Service relationship
-Resident.hasMany(Service, {
-  foreignKey: 'residentId',
-  onDelete: 'SET NULL' // Giữ lại Service nếu Resident bị xóa
-})
-Service.belongsTo(Resident, {
-  foreignKey: 'residentId',
-  onDelete: 'CASCADE' // Xóa Resident nếu Service bị xóa
-})
-
-// Payment and Service relationship
-Payment.hasMany(Service, {
-  foreignKey: 'paymentId',
-  onDelete: 'SET NULL' // Giữ lại Service nếu Payment bị xóa
-})
-Service.belongsTo(Payment, {
-  foreignKey: 'paymentId',
-  onDelete: 'CASCADE' // Xóa Payment nếu Service bị xóa
-})
-
-// Building and Facility relationship
-Building.hasMany(Facility, {
+Building.belongsToMany(Facility, {
+  through: 'BuildingFacilities',
   foreignKey: 'buildingId',
-  onDelete: 'SET NULL' // Giữ lại Facility nếu Building bị xóa
-})
-Facility.belongsTo(Building, {
-  foreignKey: 'buildingId',
-  onDelete: 'CASCADE' // Xóa Building nếu Facility bị xóa
+  onDelete: 'SET NULL'
 })
 
-// Building and Event relationship
+Facility.belongsToMany(Building, {
+  through: 'BuildingFacilities',
+  foreignKey: 'facilityId',
+  onDelete: 'CASCADE'
+})
+
 Building.hasMany(Event, {
   foreignKey: 'buildingId',
-  onDelete: 'SET NULL' // Giữ lại Event nếu Building bị xóa
+  onDelete: 'SET NULL'
 })
+
 Event.belongsTo(Building, {
   foreignKey: 'buildingId',
-  onDelete: 'CASCADE' // Xóa Building nếu Event bị xóa
+  onDelete: 'CASCADE'
+})
+
+Bill.hasMany(Payment, {
+  foreignKey: 'billId',
+  onDelete: 'SET NULL'
+})
+Payment.belongsTo(Bill, {
+  foreignKey: 'billId',
+  onDelete: 'CASCADE'
+})
+
+ServiceBooking.hasMany(Payment, {
+  foreignKey: 'serviceBookingId',
+  onDelete: 'SET NULL'
+})
+Payment.belongsTo(ServiceBooking, {
+  foreignKey: 'serviceBookingId',
+  onDelete: 'CASCADE'
 })
 
 module.exports = {
-  // initializeDefaultAdmin,
   sequelize,
   User,
   Admin,
@@ -250,5 +263,7 @@ module.exports = {
   Service,
   Roles,
   Facility,
-  Event
+  Event,
+  Bill,
+  ServiceBooking
 }

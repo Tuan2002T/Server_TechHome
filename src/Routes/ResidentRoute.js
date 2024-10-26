@@ -14,6 +14,14 @@ const {
 } = require('../Controller/ResidentController')
 const { upload } = require('../AWS/s3')
 const limiter = require('../Middleware/limiter')
+const {
+  bookingService,
+  cancelBooking,
+  getAllServiceBooking
+} = require('../Controller/ResidentController/BookingService')
+const {
+  getAllNotifications
+} = require('../Controller/ResidentController/Notification')
 
 router.post('/login', loginResident)
 router.put('/update', auth, upload.single('file'), updateResident)
@@ -27,5 +35,11 @@ router.put('/active', limiter, activeResident)
 router.post('/sendOTP', limiter, sentOTPHandler)
 router.post('/verifyOTP', limiter, verifyOTP)
 router.put('/forgotPassword', limiter, forgotPassword)
+
+router.post('/bookingService/:id', auth, bookingService)
+router.put('/cancelBooking/:bookingId', auth, cancelBooking)
+router.get('/getAllServiceBooking', auth, getAllServiceBooking)
+
+router.get('/getAllNotifications', auth, getAllNotifications)
 
 module.exports = router
