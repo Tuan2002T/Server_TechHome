@@ -562,11 +562,11 @@ const getResidentApartmentInfo = async (req, res) => {
             {
               model: User,
               attributes: ['fullname']
-            },
-            {
-              model: Vehicle, // Thêm mô hình Vehicle vào đây
-              attributes: ['vehicleId', 'vehicleNumber', 'vehicleType'] // Các trường từ bảng Vehicles
             }
+            // {
+            //   model: Vehicle, // Thêm mô hình Vehicle vào đây
+            //   attributes: ['vehicleId', 'vehicleNumber', 'vehicleType'] // Các trường từ bảng Vehicles
+            // }
           ],
           through: {
             attributes: []
@@ -598,13 +598,17 @@ const getResidentApartmentInfo = async (req, res) => {
       phone: resident.phonenumber,
       idCard: resident.idcard,
       fullname: resident.User ? resident.User.fullname : null,
-      vehicles:
-        resident.Vehicles.map((vehicle) => ({
-          id: vehicle.vehicleId,
-          number: vehicle.vehicleNumber,
-          type: vehicle.vehicleType
-        })) || [] // Lấy thông tin phương tiện
+      // vehicles:
+      //   resident.Vehicles.map((vehicle) => ({
+      //     id: vehicle.vehicleId,
+      //     number: vehicle.vehicleNumber,
+      //     type: vehicle.vehicleType
+      //   })) || [] // Lấy thông tin phương tiện
     }))
+
+    const vehicle = await Vehicle.findOne({
+      where: { residentId: residentId }
+    })
 
     const response = {
       apartment: {
@@ -621,6 +625,11 @@ const getResidentApartmentInfo = async (req, res) => {
         id: building[0].buildingId,
         name: building[0].buildingName,
         address: building[0].buildingAddress
+      },
+      vehicle: {
+        id: vehicle.vehicleId,
+        number: vehicle.vehicleNumber,
+        type: vehicle.vehicleType
       }
     }
 
