@@ -1,7 +1,14 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const validator = require('validator')
-const { User, Resident } = require('../Model/ModelDefinition')
+const {
+  User,
+  Resident,
+  Apartment,
+  Floor,
+  Building,
+  Vehicle
+} = require('../Model/ModelDefinition')
 const { Op } = require('sequelize')
 const { bucketName, uploadToS3, deleteFromS3 } = require('../AWS/s3')
 const jwtToken = require('../JWT/jwt')
@@ -51,8 +58,6 @@ const activeResident = async (req, res) => {
     if (!resident) {
       return res.status(400).json({ message: 'Resident not found' })
     }
-
-    console.log(user, resident)
 
     if (resident.userId !== user.userId) {
       return res.status(400).json({ message: 'Invalid resident' })
@@ -161,7 +166,6 @@ const loginResident = async (req, res) => {
 
     const payload = { user, resident }
     const token = jwtToken(payload)
-    console.log('login')
 
     res.status(200).json({ user, resident, token })
   } catch (error) {
@@ -380,8 +384,6 @@ const sentOTPHandler = async (req, res) => {
   // Tạo mã OTP ngẫu nhiên
   const otp = generateOTP()
 
-  console.log(validatedType)
-
   try {
     const response = await sendOTP(to, otp, validatedType, id)
     return res.status(200).json({ success: true, response })
@@ -423,7 +425,6 @@ const verifyOTP = async (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { residentId, password, otp } = req.body
-    console.log(residentId, password, otp)
 
     if (!residentId || !password || !otp) {
       return res
@@ -471,6 +472,165 @@ const forgotPassword = async (req, res) => {
   }
 }
 
+// const getResidentApartmentInfo = async (req, res) => {
+//   try {
+//     if (req.user.roleId !== 2) {
+//       return res.status(403).json({ message: 'Access denied. Residents only.' })
+//     }
+
+//     const residentId = req.user.userId
+
+//     const apartmentResidents = await Apartment.findAll({
+//       include: [
+//         {
+//           model: Resident,
+//           include: [
+//             {
+//               model: User,
+//               attributes: ['fullname']
+//             }
+//           ],
+//           through: {
+//             attributes: []
+//           }
+//         }
+//       ]
+//     })
+
+//     const filteredApartments = apartmentResidents.filter((apartment) =>
+//       apartment.Residents.some((resident) => resident.residentId === residentId)
+//     )
+
+//     if (filteredApartments.length === 0) {
+//       return res
+//         .status(404)
+//         .json({ message: 'Không tìm thấy căn hộ cho cư dân này.' })
+//     }
+
+//     const floor = await Floor.findAll({
+//       where: { floorId: filteredApartments[0].floorId }
+//     })
+
+//     const building = await Building.findAll({
+//       where: { buildingId: floor[0].buildingId }
+//     })
+
+//     const residents = filteredApartments[0].Residents.map((resident) => ({
+//       id: resident.residentId,
+//       phone: resident.phonenumber,
+//       idCard: resident.idcard,
+//       fullname: resident.User ? resident.User.fullname : null
+//     }))
+
+//     const response = {
+//       apartment: {
+//         id: filteredApartments[0].apartmentId,
+//         number: filteredApartments[0].apartmentNumber,
+//         type: filteredApartments[0].apartmentType,
+//         residents: residents
+//       },
+//       floor: {
+//         id: floor[0].floorId,
+//         number: floor[0].floorNumber
+//       },
+//       building: {
+//         id: building[0].buildingId,
+//         name: building[0].buildingName,
+//         address: building[0].buildingAddress
+//       }
+//     }
+
+//     res.status(200).json(response)
+//   } catch (error) {
+//     console.error(error)
+//     res.status(500).json({ message: 'Lỗi máy chủ nội bộ' })
+//   }
+// }
+const getResidentApartmentInfo = async (req, res) => {
+  try {
+    if (req.user.roleId !== 2) {
+      return res.status(403).json({ message: 'Access denied. Residents only.' })
+    }
+
+    const residentId = req.user.userId
+
+    const apartmentResidents = await Apartment.findAll({
+      include: [
+        {
+          model: Resident,
+          include: [
+            {
+              model: User,
+              attributes: ['fullname']
+            },
+            {
+              model: Vehicle, // Thêm mô hình Vehicle vào đây
+              attributes: ['vehicleId', 'vehicleNumber', 'vehicleType'] // Các trường từ bảng Vehicles
+            }
+          ],
+          through: {
+            attributes: []
+          }
+        }
+      ]
+    })
+
+    const filteredApartments = apartmentResidents.filter((apartment) =>
+      apartment.Residents.some((resident) => resident.residentId === residentId)
+    )
+
+    if (filteredApartments.length === 0) {
+      return res
+        .status(404)
+        .json({ message: 'Không tìm thấy căn hộ cho cư dân này.' })
+    }
+
+    const floor = await Floor.findAll({
+      where: { floorId: filteredApartments[0].floorId }
+    })
+
+    const building = await Building.findAll({
+      where: { buildingId: floor[0].buildingId }
+    })
+
+    const residents = filteredApartments[0].Residents.map((resident) => ({
+      id: resident.residentId,
+      phone: resident.phonenumber,
+      idCard: resident.idcard,
+      fullname: resident.User ? resident.User.fullname : null,
+      vehicles:
+        resident.Vehicles.map((vehicle) => ({
+          id: vehicle.vehicleId,
+          number: vehicle.vehicleNumber,
+          type: vehicle.vehicleType
+        })) || [] // Lấy thông tin phương tiện
+    }))
+
+    const response = {
+      apartment: {
+        id: filteredApartments[0].apartmentId,
+        number: filteredApartments[0].apartmentNumber,
+        type: filteredApartments[0].apartmentType,
+        residents: residents
+      },
+      floor: {
+        id: floor[0].floorId,
+        number: floor[0].floorNumber
+      },
+      building: {
+        id: building[0].buildingId,
+        name: building[0].buildingName,
+        address: building[0].buildingAddress
+      }
+    }
+
+    res.status(200).json(response)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Lỗi máy chủ nội bộ' })
+  }
+}
+
 module.exports = {
   loginResident,
   activeResident,
@@ -479,5 +639,6 @@ module.exports = {
   getResidentNoActiveByIdcard,
   sentOTPHandler,
   verifyOTP,
-  forgotPassword
+  forgotPassword,
+  getResidentApartmentInfo
 }

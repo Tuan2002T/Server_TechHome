@@ -1,4 +1,4 @@
-const { Sequelize } = require('sequelize')
+const { Sequelize, DataTypes } = require('sequelize')
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -196,6 +196,12 @@ Complaint.belongsTo(Resident, {
   onDelete: 'CASCADE'
 })
 
+const ResidentNotifications = sequelize.define('ResidentNotifications', {
+  status: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  }
+})
 Resident.belongsToMany(Notification, {
   through: 'ResidentNotifications',
   foreignKey: 'residentId',

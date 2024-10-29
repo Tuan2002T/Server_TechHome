@@ -10,7 +10,9 @@ const {
   activeResident,
   sentOTPHandler,
   verifyOTP,
-  forgotPassword
+  forgotPassword,
+
+  getResidentApartmentInfo
 } = require('../Controller/ResidentController')
 const { upload } = require('../AWS/s3')
 const limiter = require('../Middleware/limiter')
@@ -20,7 +22,9 @@ const {
   getAllServiceBooking
 } = require('../Controller/ResidentController/BookingService')
 const {
-  getAllNotifications
+  getAllNotifications,
+  readNotification,
+  readAllNotifications
 } = require('../Controller/ResidentController/Notification')
 
 router.post('/login', loginResident)
@@ -35,11 +39,14 @@ router.put('/active', limiter, activeResident)
 router.post('/sendOTP', limiter, sentOTPHandler)
 router.post('/verifyOTP', limiter, verifyOTP)
 router.put('/forgotPassword', limiter, forgotPassword)
+router.get('/getResidentApartmentInfo', auth, getResidentApartmentInfo)
 
 router.post('/bookingService/:id', auth, bookingService)
 router.put('/cancelBooking/:bookingId', auth, cancelBooking)
 router.get('/getAllServiceBooking', auth, getAllServiceBooking)
 
 router.get('/getAllNotifications', auth, getAllNotifications)
+router.put('/readNotification/:notificationId', auth, readNotification)
+router.put('/readAllNotification', auth, readAllNotifications)
 
 module.exports = router
