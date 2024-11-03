@@ -26,6 +26,9 @@ const {
   readNotification,
   readAllNotifications
 } = require('../Controller/ResidentController/Notification')
+const {
+  getAllComplaints
+} = require('../Controller/ResidentController/Complaints')
 
 router.post('/login', loginResident)
 router.put('/update', auth, upload.single('file'), updateResident)
@@ -48,5 +51,7 @@ router.get('/getAllServiceBooking', auth, getAllServiceBooking)
 router.get('/getAllNotifications', auth, getAllNotifications)
 router.put('/readNotification/:notificationId', auth, readNotification)
 router.put('/readAllNotification', auth, readAllNotifications)
+
+router.get('/getAllComplaints', auth, getAllComplaints)
 
 module.exports = router

@@ -31,6 +31,9 @@ const userModel = require('./UserModel.js')
 const vehicleModel = require('./VehicleModel.js')
 const billModel = require('./BillModel.js')
 const serviceBookingModel = require('./ServiceBookingsModel.js')
+const chatModel = require('./ChatModel.js')
+const messageModel = require('./MessageModel.js')
+const fileModel = require('./FileModel.js')
 
 const Admin = sequelize.define('Admin', adminModel)
 const ApartmentDetail = sequelize.define(
@@ -52,6 +55,9 @@ const User = sequelize.define('User', userModel)
 const Vehicle = sequelize.define('Vehicle', vehicleModel)
 const Bill = sequelize.define('Bill', billModel)
 const ServiceBooking = sequelize.define('ServiceBooking', serviceBookingModel)
+const Chat = sequelize.define('Chat', chatModel)
+const Message = sequelize.define('Message', messageModel)
+const File = sequelize.define('File', fileModel)
 
 User.belongsTo(Roles, {
   foreignKey: 'roleId',
@@ -271,5 +277,8 @@ module.exports = {
   Facility,
   Event,
   Bill,
-  ServiceBooking
+  ServiceBooking,
+  Chat,
+  Message,
+  File
 }
