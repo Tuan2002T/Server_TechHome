@@ -10,7 +10,7 @@ const fileModel = {
     type: DataTypes.STRING,
     allowNull: false
   },
-  filePath: {
+  fileUrl: {
     type: DataTypes.STRING,
     allowNull: false
   },

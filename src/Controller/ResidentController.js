@@ -640,11 +640,42 @@ const getResidentApartmentInfo = async (req, res) => {
   }
 }
 
+const updateTokenFCM = async (req, res) => {
+  try {
+
+    if (req.user.roleId !== 2) {
+      return res.status(403).json({ message: 'Access denied. Residents only.' })
+    }
+
+    const { fcmToken } = req.body
+    const residentId = req.resident.residentId
+
+    // if (!fcmToken) {
+    //   return res.status(400).json({ message: 'Resident ID and FCM token are required.' })
+    // }
+
+    const resident = await Resident.findOne({ where: { residentId } })
+
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
+    }
+
+    resident.fcmToken = fcmToken || null
+    await resident.save()
+
+    return res.status(200).json({ message: 'FCM token updated successfully.' })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 module.exports = {
   loginResident,
   activeResident,
   updateResident,
   readToken,
+  updateTokenFCM,
   getResidentNoActiveByIdcard,
   sentOTPHandler,
   verifyOTP,

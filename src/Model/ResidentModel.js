@@ -14,6 +14,10 @@ const ResidentModel = {
     type: DataTypes.STRING,
     allowNull: false
   },
+  fcmToken : {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   active: {
     type: DataTypes.BOOLEAN,
     defaultValue: false

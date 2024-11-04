@@ -6,13 +6,9 @@ const chatModel = {
     autoIncrement: true,
     primaryKey: true
   },
-  residentId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Residents',
-      key: 'residentId'
-    }
+  chatName: {
+    type: DataTypes.STRING,
+    allowNull: false
   },
   adminId: {
     type: DataTypes.INTEGER,

@@ -259,6 +259,29 @@ Payment.belongsTo(ServiceBooking, {
   onDelete: 'CASCADE'
 })
 
+Chat.belongsToMany(Resident, {
+  through: 'ChatResident',
+  foreignKey: 'chatId',
+  onDelete: 'SET NULL'
+})
+Resident.belongsToMany(Chat, {
+  through: 'ChatResident',
+  foreignKey: 'residentId',
+  onDelete: 'SET NULL'
+})
+
+Message.belongsToMany(File, {
+  through: 'MessageFiles',
+  foreignKey: 'messageId',
+  onDelete: 'SET NULL'
+})
+
+File.belongsToMany(Message, {
+  through: 'MessageFiles',
+  foreignKey: 'fileId',
+  onDelete: 'SET NULL'
+})
+
 module.exports = {
   sequelize,
   User,

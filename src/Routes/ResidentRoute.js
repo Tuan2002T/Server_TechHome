@@ -12,7 +12,8 @@ const {
   verifyOTP,
   forgotPassword,
 
-  getResidentApartmentInfo
+  getResidentApartmentInfo,
+  updateTokenFCM
 } = require('../Controller/ResidentController')
 const { upload } = require('../AWS/s3')
 const limiter = require('../Middleware/limiter')
@@ -31,6 +32,7 @@ const {
 } = require('../Controller/ResidentController/Complaints')
 
 router.post('/login', loginResident)
+router.put('/updateTokenFCM', auth, updateTokenFCM)
 router.put('/update', auth, upload.single('file'), updateResident)
 router.get('/readToken', auth, readToken)
 router.get(

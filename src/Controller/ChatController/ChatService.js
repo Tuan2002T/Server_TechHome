@@ -1,95 +1,221 @@
-const { Chat } = require('../../Model/ModelDefinition')
+const { Chat, Resident } = require('../../Model/ModelDefinition')
+
+require('../../Model/ModelDefinition')
 
 const getAllChats = async (req, res) => {
   try {
-    if (req.user.roleId !== 1) {
-      return res.status(403).json('You are not allowed to see all chats')
-    }
-    const chats = await Chat.find()
-    res.status(200).json(chats)
+    const chats = await Chat.findAll({
+      include: [
+        {
+          model: Resident,
+          as: 'Residents',
+          where: { residentId: req.resident.residentId },
+          required: true,
+          attributes: []
+        }
+      ]
+    })
+
+    res.status(200).json({
+      data: chats
+    })
   } catch (error) {
-    res.status(500).json(error)
+    res.status(500).json({
+      message: 'Error retrieving chats',
+      error: error.message
+    })
   }
 }
 
 const createChat = async (req, res) => {
   try {
     if (req.user.roleId !== 1) {
-      return res.status(403).json('You are not allowed to create a chat')
+      return res.status(403).json({
+        message: 'You do not have permission to create a chat'
+      })
     }
-    const newChat = new Chat(req.body)
-    const chat = await newChat.save()
-    res.status(200).json(chat)
+
+    const { chatName, chatType, residentIds } = req.body
+
+    const newChat = await Chat.create({
+      chatName,
+      chatType,
+      adminId: req.admin.adminId,
+      chatDate: new Date()
+    })
+
+    if (residentIds && Array.isArray(residentIds) && residentIds.length > 0) {
+      await newChat.addResidents(residentIds)
+    }
+
+    res.status(201).json({
+      message: 'Chat created successfully',
+      data: newChat
+    })
   } catch (error) {
-    res.status(500).json(error)
+    console.error('Error creating chat:', error)
+    res.status(500).json({
+      message: 'Error creating chat',
+      error: error.message
+    })
   }
 }
 
 const updateChat = async (req, res) => {
   try {
     if (req.user.roleId !== 1) {
-      return res.status(403).json('You are not allowed to update a chat')
+      return res.status(403).json({
+        message: 'You do not have permission to update this chat'
+      })
     }
+
     const chat = await Chat.findById(req.params.id)
+    if (!chat) {
+      return res.status(404).json({
+        message: 'Chat not found'
+      })
+    }
+
     if (chat.adminId === req.body.adminId) {
       await chat.updateOne({ $set: req.body })
-      res.status(200).json('The chat has been updated')
+      res.status(200).json({
+        message: 'Chat updated successfully'
+      })
     } else {
-      res.status(403).json('You can update only your chat')
+      res.status(403).json({
+        message: 'You can only update chats you created'
+      })
     }
   } catch (error) {
-    res.status(500).json(error)
+    res.status(500).json({
+      message: 'Error updating chat',
+      error: error.message
+    })
   }
 }
 
 const deleteChat = async (req, res) => {
   try {
     if (req.user.roleId !== 1) {
-      return res.status(403).json('You are not allowed to delete a chat')
+      return res.status(403).json({
+        message: 'You do not have permission to delete this chat'
+      })
     }
-    const chat = await Chat.findById(req.params.id)
-    if (chat.adminId === req.body.adminId) {
-      await chat.deleteOne()
-      res.status(200).json('The chat has been deleted')
-    } else {
-      res.status(403).json('You can delete only your chat')
+
+    const chat = await Chat.findByPk(req.params.id)
+    if (!chat) {
+      return res.status(404).json({
+        message: 'Chat not found'
+      })
     }
+
+    if (chat.adminId !== req.admin.adminId) {
+      return res.status(403).json({
+        message: 'You can only delete chats you created'
+      })
+    }
+
+    await chat.setResidents([])
+
+    // Xóa chat
+    await chat.destroy()
+    res.status(200).json({
+      message: 'Chat deleted successfully'
+    })
   } catch (error) {
-    res.status(500).json(error)
+    console.error('Error deleting chat:', error)
+    res.status(500).json({
+      message: 'Error deleting chat',
+      error: error.message
+    })
   }
 }
 
-const deleteMember = async (req, res) => {
+const removeMember = async (req, res) => {
   try {
     if (req.user.roleId !== 1) {
-      return res.status(403).json('You are not allowed to delete a member')
+      return res.status(403).json({
+        message: 'You do not have permission to remove members'
+      })
     }
-    const chat = await Chat.findById(req.params.id)
-    if (chat.adminId === req.body.adminId) {
-      await chat.updateOne({ $pull: { members: req.body.memberId } })
-      res.status(200).json('The member has been deleted')
-    } else {
-      res.status(403).json('You can delete only your member')
+
+    const chat = await Chat.findByPk(req.params.id)
+    if (!chat) {
+      return res.status(404).json({
+        message: 'Chat not found'
+      })
     }
+
+    if (chat.adminId !== req.admin.adminId) {
+      return res.status(403).json({
+        message: 'You can only remove members from chats you created'
+      })
+    }
+
+    const residents = await chat.getResidents({
+      where: { residentId: req.body.memberId }
+    })
+
+    if (residents.length === 0) {
+      return res.status(400).json({
+        message: 'Member does not exist in this chat'
+      })
+    }
+
+    await chat.removeResident(req.body.memberId)
+
+    res.status(200).json({
+      message: 'Member removed successfully'
+    })
   } catch (error) {
-    res.status(500).json(error)
+    console.error('Error removing member:', error)
+    res.status(500).json({
+      message: 'Error removing member',
+      error: error.message
+    })
   }
 }
 
 const addMember = async (req, res) => {
   try {
     if (req.user.roleId !== 1) {
-      return res.status(403).json('You are not allowed to add a member')
+      return res.status(403).json({
+        message: 'You do not have permission to add members'
+      })
     }
-    const chat = await Chat.findById(req.params.id)
-    if (chat.adminId === req.body.adminId) {
-      await chat.updateOne({ $push: { members: req.body.memberId } })
-      res.status(200).json('The member has been added')
-    } else {
-      res.status(403).json('You can add only your member')
+
+    const memberId = req.body.memberId
+    const chat = await Chat.findByPk(req.params.id)
+
+    if (!chat) {
+      return res.status(404).json({
+        message: 'Chat not found'
+      })
     }
+
+    const residents = await chat.getResidents({
+      where: { residentId: memberId }
+    })
+
+    if (residents.length > 0) {
+      return res.status(400).json({
+        message: 'Member already exists in this chat'
+      })
+    }
+
+    await chat.addResident(memberId, {
+      through: { joinedDate: new Date() }
+    })
+
+    res.status(200).json({
+      message: 'Member added successfully'
+    })
   } catch (error) {
-    res.status(500).json(error)
+    console.error('Error adding member:', error)
+    res.status(500).json({
+      message: 'Error adding member',
+      error: error.message
+    })
   }
 }
 
@@ -98,6 +224,6 @@ module.exports = {
   createChat,
   updateChat,
   deleteChat,
-  deleteMember,
+  removeMember,
   addMember
 }

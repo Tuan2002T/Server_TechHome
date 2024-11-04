@@ -22,14 +22,6 @@ const messageModel = {
     type: DataTypes.STRING,
     allowNull: false
   },
-  fileId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'Files',
-      key: 'fileId'
-    }
-  },
   sentAt: {
     type: DataTypes.DATE,
     allowNull: false,

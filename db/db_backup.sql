@@ -4,6 +4,11 @@ SELECT * FROM "Services"
 SELECT * FROM "Floors"
 SELECT * FROM "Apartments"
 SELECT * FROM "Residents"
+SELECT * FROM "ChatResident"
+SELECT * FROM "Chats"
+SELECT * FROM "Messages"
+SELECT * FROM "Files"
+SELECT * FROM "MessageFiles"
 INSERT INTO "Roles" ("roleName", "createdAt", "updatedAt") VALUES
 ('Admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('Resident', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
