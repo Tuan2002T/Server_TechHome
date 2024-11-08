@@ -4,6 +4,7 @@ const auth = require('../Middleware/auth')
 
 const {
   loginAdmin,
+  getCurrentAdmin,
   getAdminById,
   updateAdmin
 } = require('../Controller/AdminController')
@@ -73,6 +74,7 @@ router.get('/service', auth, (req, res) => {
 })
 
 router.post('/login', loginAdmin)
+router.get('/current', auth, getCurrentAdmin)
 router.get('/:id', auth, getAdminById)
 router.put('/update', auth, upload.single('file'), updateAdmin)
 

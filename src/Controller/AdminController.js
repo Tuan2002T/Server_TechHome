@@ -60,9 +60,21 @@ const loginAdmin = async (req, res) => {
 
     const token = jwtToken(payload)
 
-    res.status(200).json({ user, admin, token })
+    // res.status(200).json({ status: true, data: {user, admin, token} })
+    res.status(200).json({ status: true, message: 'success', token})
   } catch (error) {
     console.error('Error during admin login:', error)
+    res.status(500).json({ message: 'An internal error occurred' })
+  }
+}
+
+// get current admin with token
+const getCurrentAdmin = async (req, res) => {
+  try {
+    const { user, admin } = req
+    res.status(200).json({ user, admin })
+  } catch (error) {
+    console.error('Error during getting current admin:', error)
     res.status(500).json({ message: 'An internal error occurred' })
   }
 }
@@ -156,6 +168,7 @@ const updateAdmin = async (req, res) => {
 
 module.exports = {
   loginAdmin,
+  getCurrentAdmin,
   getAdminById,
   updateAdmin
 }
