@@ -33,8 +33,12 @@ const sendMessages = async (req, res) => {
       return res.status(404).json('Chat not found')
     }
 
+    console.log(chat.adminId)
+    console.log(req.user.userId)
+
     if (
-      !chat.Residents.some((resident) => resident.userId === req.user.userId)
+      !chat.Residents.some((resident) => resident.userId === req.user.userId) &&
+      !chat.adminId === req.user.userId
     ) {
       return res.status(403).json('You are not a member of this chat')
     }
