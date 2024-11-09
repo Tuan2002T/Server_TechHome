@@ -1,4 +1,4 @@
-const { Building, Admin } = require('../../Model/ModelDefinition')
+const { Building, Floor } = require('../../Model/ModelDefinition')
 
 const getAllBuildings = async (req, res) => {
   try {
@@ -7,7 +7,7 @@ const getAllBuildings = async (req, res) => {
     }
 
     const buildings = await Building.findAll()
-    res.status(200).json(buildings)
+    res.status(200).json({ status: true, data: buildings })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -16,21 +16,23 @@ const getAllBuildings = async (req, res) => {
 
 const getBuildingById = async (req, res) => {
   try {
-    const buildingId = req.params.id
-
     if (req.user.roleId !== 1) {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
-
+    const buildingId = req.params.id
     const building = await Building.findOne({
       where: { buildingId }
     })
 
     if (!building) {
-      return res.status(400).json({ message: 'Building not found' })
+      return res.status(400).json({ message: 'Floor not found' })
     }
 
-    res.status(200).json(building)
+    const floors = await building.getFloors()
+
+    building.dataValues.floors = floors
+
+    res.status(200).json({ status: true, data: building })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

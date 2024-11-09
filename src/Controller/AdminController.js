@@ -67,6 +67,17 @@ const loginAdmin = async (req, res) => {
   }
 }
 
+// get current admin with token
+const getCurrentAdmin = async (req, res) => {
+  try {
+    const { user, admin } = req
+    res.status(200).json({ user, admin })
+  } catch (error) {
+    console.error('Error during getting current admin:', error)
+    res.status(500).json({ message: 'An internal error occurred' })
+  }
+}
+
 const getAdminById = async (req, res) => {
   try {
     const { adminId } = req.params
@@ -156,6 +167,7 @@ const updateAdmin = async (req, res) => {
 
 module.exports = {
   loginAdmin,
+  getCurrentAdmin,
   getAdminById,
   updateAdmin
 }
