@@ -56,10 +56,10 @@ const loginAdmin = async (req, res) => {
     }
 
     const payload = { user, admin }
-    console.log(payload)
-
+    user.token = null
     const token = jwtToken(payload)
-
+    user.token = token
+    user.save()
     res.status(200).json({ user, admin, token })
   } catch (error) {
     console.error('Error during admin login:', error)

@@ -27,7 +27,11 @@ const userModel = {
   email: {
     type: DataTypes.STRING,
     allowNull: true
-  }
+  },
+  token: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
 }
 
 module.exports = userModel

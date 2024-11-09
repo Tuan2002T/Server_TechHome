@@ -4,7 +4,13 @@ const {
   getFileTypeFromMimeType,
   deleteMultipleFromS3
 } = require('../../AWS/s3')
-const { Chat, Message, Resident, File } = require('../../Model/ModelDefinition')
+const {
+  Chat,
+  Message,
+  Resident,
+  File,
+  User
+} = require('../../Model/ModelDefinition')
 
 const sendMessages = async (req, res) => {
   try {
@@ -34,10 +40,11 @@ const sendMessages = async (req, res) => {
     ) {
       return res.status(403).json('You are not a member of this chat')
     }
+    console.log(req.resident.residentId)
 
     const message = await Message.create({
       chatId: chat.chatId,
-      senderId: req.resident.residentId,
+      senderId: req.user.userId,
       content: req.body.message,
       sentAt: new Date()
     })
@@ -81,7 +88,7 @@ const sendMessages = async (req, res) => {
       }
     }
 
-    res.status(201).json({ response })
+    res.status(201).json(response.message)
   } catch (error) {
     res.status(500).json(error)
     console.log('Error sending message:', error)
@@ -144,14 +151,28 @@ const getAllMessagesByChatId = async (req, res) => {
       include: {
         model: File,
         as: 'Files',
-        attributes: ['fileId', 'fileName', 'fileUrl'],
+        attributes: ['fileId', 'fileName', 'fileUrl', 'fileType'],
         through: {
           attributes: []
         }
       }
     })
 
-    res.status(200).json({ messages })
+    const messagesWithAvatars = await Promise.all(
+      messages.map(async (message) => {
+        const user = await User.findOne({
+          where: { userId: message.senderId },
+          attributes: ['avatar']
+        })
+
+        return {
+          ...message.toJSON(),
+          avatar: user ? user.avatar : null
+        }
+      })
+    )
+
+    res.status(200).json(messagesWithAvatars)
   } catch (error) {
     res.status(500).json(error)
     console.log('Error getting messages:', error)

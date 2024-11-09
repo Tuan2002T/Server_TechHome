@@ -1,18 +1,33 @@
+const {
+  User,
+  Resident,
+  Apartment,
+  Floor,
+  Building,
+  Vehicle
+} = require('../Model/ModelDefinition')
 const jwt = require('jsonwebtoken')
 
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1]
 
   if (!token) {
     return res.status(401).json({ message: 'Access token is required' })
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ message: 'Invalid or expired token' })
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const { user, resident, admin } = decoded.payload
+
+    const check = await User.findOne({ where: { userId: user.userId } })
+
+    if (!check) {
+      return res.status(403).json({ message: 'User not found' })
     }
 
-    const { user, resident, admin } = decoded.payload
+    if (check.token !== token) {
+      return res.status(403).json({ message: 'Invalid token' })
+    }
 
     const userRoleId = user.roleId
 
@@ -29,7 +44,9 @@ const verifyToken = (req, res, next) => {
     }
 
     next()
-  })
+  } catch (err) {
+    return res.status(403).json({ message: 'Invalid or expired token' })
+  }
 }
 
 module.exports = verifyToken

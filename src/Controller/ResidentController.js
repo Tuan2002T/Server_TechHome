@@ -163,10 +163,11 @@ const loginResident = async (req, res) => {
     if (!match) {
       return res.status(400).json({ message: 'Incorrect password' })
     }
-
+    user.token = null
     const payload = { user, resident }
     const token = jwtToken(payload)
-
+    user.token = token
+    user.save()
     res.status(200).json({ user, resident, token })
   } catch (error) {
     console.error('Error during login:', error)
@@ -597,7 +598,7 @@ const getResidentApartmentInfo = async (req, res) => {
       id: resident.residentId,
       phone: resident.phonenumber,
       idCard: resident.idcard,
-      fullname: resident.User ? resident.User.fullname : null,
+      fullname: resident.User ? resident.User.fullname : null
       // vehicles:
       //   resident.Vehicles.map((vehicle) => ({
       //     id: vehicle.vehicleId,
@@ -642,7 +643,6 @@ const getResidentApartmentInfo = async (req, res) => {
 
 const updateTokenFCM = async (req, res) => {
   try {
-
     if (req.user.roleId !== 2) {
       return res.status(403).json({ message: 'Access denied. Residents only.' })
     }
