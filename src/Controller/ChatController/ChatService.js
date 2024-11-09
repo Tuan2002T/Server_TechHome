@@ -1,9 +1,19 @@
-const { Chat, Resident } = require('../../Model/ModelDefinition')
+const { Chat, Resident, Admin } = require('../../Model/ModelDefinition')
 
 require('../../Model/ModelDefinition')
 
 const getAllChats = async (req, res) => {
   try {
+    if (req.user.roleId === 1) {
+      const adminId = await Admin.findOne({
+        where: { adminId: req.admin.adminId }
+      })
+      const chats = await Chat.findAll({
+        where: { adminId: adminId.adminId }
+      })
+      return res.status(200).json(chats)
+    }
+
     const chats = await Chat.findAll({
       include: [
         {
@@ -16,9 +26,7 @@ const getAllChats = async (req, res) => {
       ]
     })
 
-    res.status(200).json({
-      data: chats
-    })
+    res.status(200).json(chats)
   } catch (error) {
     res.status(500).json({
       message: 'Error retrieving chats',
