@@ -34,6 +34,7 @@ const serviceBookingModel = require('./ServiceBookingsModel.js')
 const chatModel = require('./ChatModel.js')
 const messageModel = require('./MessageModel.js')
 const fileModel = require('./FileModel.js')
+const sequelizePaginate = require('sequelize-paginate')
 
 const Admin = sequelize.define('Admin', adminModel)
 const ApartmentDetail = sequelize.define(
@@ -281,7 +282,24 @@ File.belongsToMany(Message, {
   foreignKey: 'fileId',
   onDelete: 'SET NULL'
 })
-
+sequelizePaginate.paginate(Message)
+sequelizePaginate.paginate(Chat)
+sequelizePaginate.paginate(Notification)
+sequelizePaginate.paginate(Complaint)
+sequelizePaginate.paginate(Event)
+sequelizePaginate.paginate(Service)
+sequelizePaginate.paginate(ServiceBooking)
+sequelizePaginate.paginate(Bill)
+sequelizePaginate.paginate(Payment)
+sequelizePaginate.paginate(Facility)
+sequelizePaginate.paginate(Resident)
+sequelizePaginate.paginate(Admin)
+sequelizePaginate.paginate(User)
+sequelizePaginate.paginate(Roles)
+sequelizePaginate.paginate(Vehicle)
+sequelizePaginate.paginate(Apartment)
+sequelizePaginate.paginate(ApartmentDetail)
+sequelizePaginate.paginate(Building)
 module.exports = {
   sequelize,
   User,

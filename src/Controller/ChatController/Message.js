@@ -34,13 +34,10 @@ const sendMessages = async (req, res) => {
     }
 
     if (
-      !chat.Residents.some(
-        (resident) => resident.residentId === req.resident.residentId
-      )
+      !chat.Residents.some((resident) => resident.userId === req.user.userId)
     ) {
       return res.status(403).json('You are not a member of this chat')
     }
-    console.log(req.resident.residentId)
 
     const message = await Message.create({
       chatId: chat.chatId,
@@ -84,7 +81,7 @@ const sendMessages = async (req, res) => {
     const response = {
       message: {
         ...message.get({ plain: true }),
-        files: url
+        Files: url
       }
     }
 
@@ -137,6 +134,8 @@ const deleteMessage = async (req, res) => {
 }
 
 const getAllMessagesByChatId = async (req, res) => {
+  const { offset = 0, limit } = req.query
+
   try {
     const chat = await Chat.findOne({
       where: { chatId: req.params.id }
@@ -146,17 +145,20 @@ const getAllMessagesByChatId = async (req, res) => {
       return res.status(404).json('Chat not found')
     }
 
-    const messages = await Message.findAll({
+    const { count, rows: messages } = await Message.findAndCountAll({
       where: { chatId: req.params.id },
       include: {
         model: File,
         as: 'Files',
         attributes: ['fileId', 'fileName', 'fileUrl', 'fileType'],
-        through: {
-          attributes: []
-        }
-      }
+        through: { attributes: [] }
+      },
+      order: [['sentAt', 'DESC']],
+      offset: parseInt(offset),
+      limit: parseInt(limit)
     })
+
+    const totalPages = Math.ceil(count / limit)
 
     const messagesWithAvatars = await Promise.all(
       messages.map(async (message) => {
@@ -172,9 +174,13 @@ const getAllMessagesByChatId = async (req, res) => {
       })
     )
 
-    res.status(200).json(messagesWithAvatars)
+    res.status(200).json({
+      messages: messagesWithAvatars.reverse(),
+      totalPages,
+      totalMessages: count
+    })
   } catch (error) {
-    res.status(500).json(error)
+    res.status(500).json({ error: 'Error fetching messages' })
     console.log('Error getting messages:', error)
   }
 }
