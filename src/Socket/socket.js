@@ -3,6 +3,7 @@ const { Server } = require('socket.io')
 const createSocket = (server) => {
   const members = []
   const usersOnline = []
+  let chatRooms = []
   const io = new Server(server, {
     cors: {
       origin: '*',
@@ -26,12 +27,46 @@ const createSocket = (server) => {
     })
 
     socket.on('joinChat', (chatId) => {
-      socket.join(chatId)
+      console.log('Joining chat : ', chatId)
+
+      const user = usersOnline.find((user) => user.socketId === socket.id)
+      console.log(user)
+
+      const existingChat = chatRooms.find((room) => room.chatId === chatId)
+
+      if (existingChat) {
+        existingChat.users.push(user)
+      } else {
+        chatRooms.push({ chatId, users: [user] })
+      }
+      console.log(chatRooms)
     })
 
-    socket.on('sendMessage', (message) => {
-      const { content, file, senderId, chatId } = message
-      io.to(message.chatId).emit('message', message)
+    socket.on('outChat', (chatId) => {
+      const chatRoom = chatRooms.find((room) => room.chatId === chatId)
+
+      if (chatRoom) {
+        const userIndex = chatRoom.users.findIndex(
+          (user) => user.socketId === socket.id
+        )
+
+        if (userIndex !== -1) {
+          chatRoom.users.splice(userIndex, 1)
+
+          if (chatRoom.users.length === 0) {
+            chatRooms = chatRooms.filter((room) => room.chatId !== chatId)
+          }
+        }
+      }
+      console.log(chatRooms)
+    })
+
+    socket.on('sendMessage', (message, chatId) => {
+      const chatRoom = chatRooms.find((room) => room.chatId === chatId)
+
+      chatRoom.users.forEach((user) => {
+        io.to(user.socketId).emit('receiveMessage', message)
+      })
     })
 
     socket.on('deleteMessage', (message) => {
