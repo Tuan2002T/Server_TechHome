@@ -51,11 +51,14 @@ const sendMessages = async (req, res) => {
     })
 
     const files = req.files
+    console.log(files);
 
     const checkMimetype = files.some(
       (file) =>
-        !['image', 'video', 'document'].includes(file.mimetype.split('/')[0])
-    )
+        !['image', 'video', 'document', 'application', 'text'].includes(file.mimetype.split('/')[0])
+    );
+
+    console.log(checkMimetype);
 
     if (checkMimetype) {
       return res.status(400).json('Invalid file type')
