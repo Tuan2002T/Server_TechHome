@@ -30,6 +30,9 @@ const {
 const {
   getAllComplaints
 } = require('../Controller/ResidentController/Complaints')
+const {
+  getAllBuildingServices
+} = require('../Controller/ResidentController/Service')
 
 router.post('/login', loginResident)
 router.put('/updateTokenFCM', auth, updateTokenFCM)
@@ -55,5 +58,6 @@ router.put('/readNotification/:notificationId', auth, readNotification)
 router.put('/readAllNotification', auth, readAllNotifications)
 
 router.get('/getAllComplaints', auth, getAllComplaints)
+router.get('/getAllBuildingServices', auth, getAllBuildingServices)
 
 module.exports = router

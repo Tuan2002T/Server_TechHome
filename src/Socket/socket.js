@@ -63,10 +63,11 @@ const createSocket = (server) => {
 
     socket.on('sendMessage', (message, chatId) => {
       const chatRoom = chatRooms.find((room) => room.chatId === chatId)
-
       chatRoom.users.forEach((user) => {
-        io.to(user.socketId).emit('receiveMessage', message)
-      })
+        if (user.socketId !== socket.id) {
+          io.to(user.socketId).emit('receiveMessage', message);
+        }
+      });
     })
 
     socket.on('deleteMessage', (message) => {

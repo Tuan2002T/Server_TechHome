@@ -249,23 +249,19 @@ const updateResident = async (req, res) => {
 
 const readToken = async (req, res) => {
   try {
-    // Kiểm tra xem người dùng có vai trò là admin hay resident
     if (req.user.roleId === 1) {
-      // Người dùng là admin
       res.status(200).json({
         user: req.user,
         admin: req.admin,
         message: 'Admin access'
       })
     } else if (req.user.roleId === 2) {
-      // Người dùng là resident
       res.status(200).json({
         user: req.user,
         resident: req.resident,
         message: 'Resident access'
       })
     } else {
-      // Nếu không phải admin hoặc resident
       res.status(403).json({ message: 'Forbidden' })
     }
   } catch (error) {
@@ -564,10 +560,6 @@ const getResidentApartmentInfo = async (req, res) => {
               model: User,
               attributes: ['fullname']
             }
-            // {
-            //   model: Vehicle, // Thêm mô hình Vehicle vào đây
-            //   attributes: ['vehicleId', 'vehicleNumber', 'vehicleType'] // Các trường từ bảng Vehicles
-            // }
           ],
           through: {
             attributes: []
@@ -599,12 +591,6 @@ const getResidentApartmentInfo = async (req, res) => {
       phone: resident.phonenumber,
       idCard: resident.idcard,
       fullname: resident.User ? resident.User.fullname : null
-      // vehicles:
-      //   resident.Vehicles.map((vehicle) => ({
-      //     id: vehicle.vehicleId,
-      //     number: vehicle.vehicleNumber,
-      //     type: vehicle.vehicleType
-      //   })) || [] // Lấy thông tin phương tiện
     }))
 
     const vehicle = await Vehicle.findOne({
