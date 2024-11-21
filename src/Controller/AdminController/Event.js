@@ -1,4 +1,4 @@
-const { Event } = require('../../Model/ModelDefinition')
+const { Event, Building } = require('../../Model/ModelDefinition')
 
 const getAllEvents = async (req, res) => {
   try {
@@ -8,7 +8,27 @@ const getAllEvents = async (req, res) => {
 
     const events = await Event.findAll()
 
-    res.status(200).json({status: true, message: 'success', data: events})
+    // count the number of events
+    const count = events.length
+
+    const buildings = await Building.findAll({
+      attributes: ['buildingId', 'buildingName']
+    })
+
+    // group events by building
+    const groupedEvents = buildings.map((building) => {
+      const buildingEvents = events.filter(
+        (event) => event.buildingId === building.buildingId
+      )
+
+      return {
+        buildingId: building.buildingId,
+        buildingName: building.buildingName,
+        events: buildingEvents
+      }
+    })
+
+    res.status(200).json({ status: true, count: count, data: groupedEvents })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

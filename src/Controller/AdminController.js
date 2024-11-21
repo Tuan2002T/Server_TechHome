@@ -70,6 +70,78 @@ const loginAdmin = async (req, res) => {
   }
 }
 
+const signIn = async (req, res) => {
+  try {
+    const { username, email, password } = req.body
+
+    if (!email && !username && !password) {
+      return res
+        .status(400)
+        .json({ message: 'Username, email, or password is required' })
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: 'Password is required' })
+    }
+
+    if (email && !validator.isEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email' })
+    }
+
+    const user = await User.findOne({
+      where: {
+        [Op.and]: [
+          { roleId: 1 }, // Kiểm tra roleId của admin
+          {
+            [Op.or]: [
+              username ? { username } : undefined,
+              email ? { email } : undefined
+            ].filter(Boolean)
+          }
+        ]
+      }
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
+    const admin = await Admin.findOne({
+      where: { userId: user.userId }
+    })
+
+    if (!admin) {
+      return res.status(400).json({ message: 'Admin not found' })
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Incorrect password' })
+    }
+
+    const payload = { user, admin }
+    user.token = null
+    const token = jwtToken(payload)
+    user.token = token
+    user.save()
+    res.status(200).json({ status: true, token: token })
+  } catch (error) {
+    console.error('Error during admin login:', error)
+    res.status(500).json({ message: 'An internal error occurred' })
+  }
+}
+
+// get current admin with token
+const getCurrentAdmin = async (req, res) => {
+  try {
+    const { user, admin } = req
+    res.status(200).json({ user, admin })
+  } catch (error) {
+    console.error('Error during getting current admin:', error)
+    res.status(500).json({ message: 'An internal error occurred' })
+  }
+}
+
 const getAdminById = async (req, res) => {
   try {
     const { adminId } = req.params
@@ -159,6 +231,8 @@ const updateAdmin = async (req, res) => {
 
 module.exports = {
   loginAdmin,
+  signIn,
+  getCurrentAdmin,
   getAdminById,
   updateAdmin
 }

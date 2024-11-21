@@ -4,11 +4,15 @@ const auth = require('../Middleware/auth')
 
 const {
   loginAdmin,
+  signIn,
+  getCurrentAdmin,
   getAdminById,
   updateAdmin
 } = require('../Controller/AdminController')
 const {
   getAllBuildings,
+  getBuildingDetail,
+  buildingDetail2,
   getBuildingById,
   createBuilding,
   updateBuilding,
@@ -73,11 +77,15 @@ router.get('/service', auth, (req, res) => {
 })
 
 router.post('/login', loginAdmin)
+router.post('/sign-in', signIn)
+router.get('/current', auth, getCurrentAdmin)
 router.get('/:id', auth, getAdminById)
 router.put('/update', auth, upload.single('file'), updateAdmin)
 
 // manage building
 router.get('/building/getAll', auth, getAllBuildings)
+router.get('/building/detail', auth, getBuildingDetail)
+router.get('/building/detail-include-apartment', auth, buildingDetail2)
 router.get('/building/:id', auth, getBuildingById)
 router.post('/building', auth, createBuilding)
 router.put('/building/:id', auth, updateBuilding)

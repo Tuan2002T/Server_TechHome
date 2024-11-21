@@ -14,6 +14,57 @@ const getAllBuildings = async (req, res) => {
   }
 }
 
+// list buildingId
+const getBuildingDetail = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    const buildings = await Building.findAll({
+      attributes: ['buildingId', 'buildingName']
+    })
+
+    for (let i = 0; i < buildings.length; i++) {
+      const floors = await buildings[i].getFloors()
+      buildings[i].dataValues.floors = floors
+    }
+
+    res.status(200).json({ status: true, data: buildings })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+const buildingDetail2 = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    const buildings = await Building.findAll({
+      attributes: ['buildingId', 'buildingName']
+    })
+
+    for (let i = 0; i < buildings.length; i++) {
+      const floors = await buildings[i].getFloors({
+        attributes: ['floorId', 'floorNumber']
+      })
+      for (let j = 0; j < floors.length; j++) {
+        const apartments = await floors[j].getApartments()
+
+        floors[j].dataValues.apartments = apartments
+      }
+      buildings[i].dataValues.floors = floors
+    }
+    res.status(200).json({ status: true, data: buildings })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 const getBuildingById = async (req, res) => {
   try {
     const buildingId = req.params.id
@@ -131,6 +182,8 @@ const deleteBuilding = async (req, res) => {
 
 module.exports = {
   getAllBuildings,
+  getBuildingDetail,
+  buildingDetail2,
   getBuildingById,
   createBuilding,
   updateBuilding,

@@ -233,6 +233,65 @@ Event.belongsTo(Building, {
   onDelete: 'CASCADE' // Xóa Building nếu Event bị xóa
 })
 
+Bill.hasMany(Payment, {
+  foreignKey: 'billId',
+  onDelete: 'SET NULL'
+})
+Payment.belongsTo(Bill, {
+  foreignKey: 'billId',
+  onDelete: 'CASCADE'
+})
+
+ServiceBooking.hasMany(Payment, {
+  foreignKey: 'serviceBookingId',
+  onDelete: 'SET NULL'
+})
+Payment.belongsTo(ServiceBooking, {
+  foreignKey: 'serviceBookingId',
+  onDelete: 'CASCADE'
+})
+
+Chat.belongsToMany(Resident, {
+  through: 'ChatResident',
+  foreignKey: 'chatId',
+  onDelete: 'SET NULL'
+})
+Resident.belongsToMany(Chat, {
+  through: 'ChatResident',
+  foreignKey: 'residentId',
+  onDelete: 'SET NULL'
+})
+
+Message.belongsToMany(File, {
+  through: 'MessageFiles',
+  foreignKey: 'messageId',
+  onDelete: 'SET NULL'
+})
+
+File.belongsToMany(Message, {
+  through: 'MessageFiles',
+  foreignKey: 'fileId',
+  onDelete: 'SET NULL'
+})
+sequelizePaginate.paginate(Message)
+sequelizePaginate.paginate(Chat)
+sequelizePaginate.paginate(Notification)
+sequelizePaginate.paginate(Complaint)
+sequelizePaginate.paginate(Event)
+sequelizePaginate.paginate(Service)
+sequelizePaginate.paginate(ServiceBooking)
+sequelizePaginate.paginate(Bill)
+sequelizePaginate.paginate(Payment)
+sequelizePaginate.paginate(Facility)
+sequelizePaginate.paginate(Resident)
+sequelizePaginate.paginate(Admin)
+sequelizePaginate.paginate(User)
+sequelizePaginate.paginate(Roles)
+sequelizePaginate.paginate(Vehicle)
+sequelizePaginate.paginate(Apartment)
+sequelizePaginate.paginate(ApartmentDetail)
+sequelizePaginate.paginate(Building)
+sequelizePaginate.paginate(Floor)
 module.exports = {
   // initializeDefaultAdmin,
   sequelize,
