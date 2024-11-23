@@ -28,7 +28,9 @@ const {
   readAllNotifications
 } = require('../Controller/ResidentController/Notification')
 const {
-  getAllComplaints
+  getAllComplaints,
+  sendComplaint,
+  getAllBuidlingsAndFloorsAndApartments
 } = require('../Controller/ResidentController/Complaints')
 const {
   getAllBuildingServices
@@ -59,5 +61,11 @@ router.put('/readAllNotification', auth, readAllNotifications)
 
 router.get('/getAllComplaints', auth, getAllComplaints)
 router.get('/getAllBuildingServices', auth, getAllBuildingServices)
+router.post('/sendComplaint', auth, sendComplaint)
+router.get(
+  '/getAllBuidlingsAndFloorsAndApartments',
+  auth,
+  getAllBuidlingsAndFloorsAndApartments
+)
 
 module.exports = router
