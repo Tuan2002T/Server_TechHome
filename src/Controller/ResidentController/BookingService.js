@@ -1,7 +1,8 @@
 const {
   Service,
   Resident,
-  ServiceBooking
+  ServiceBooking,
+  Bill
 } = require('../../Model/ModelDefinition')
 
 const getAllServiceBooking = async (req, res) => {
@@ -47,7 +48,17 @@ const bookingService = async (req, res) => {
     }
 
     const newBooking = await ServiceBooking.create(booking)
-    return res.status(201).json(newBooking)
+
+    const bill = {
+      serviceBookingId: newBooking.serviceBookingId,
+      billAmount: service.servicePrice,
+      residentId: req.resident.residentId,
+      billDate: new Date(),
+      billName: service[0].serviceName
+    }
+
+    const createBill = await Bill.create(bill)
+    return res.status(201).json({ newBooking, bill: createBill })
   } catch (error) {
     return res.status(500).json({ message: error.message })
   }

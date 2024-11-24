@@ -251,13 +251,13 @@ Payment.belongsTo(Bill, {
   onDelete: 'CASCADE'
 })
 
-ServiceBooking.hasMany(Payment, {
+ServiceBooking.hasOne(Bill, {
   foreignKey: 'serviceBookingId',
   onDelete: 'SET NULL'
 })
-Payment.belongsTo(ServiceBooking, {
-  foreignKey: 'serviceBookingId',
-  onDelete: 'CASCADE'
+
+Bill.belongsTo(ServiceBooking, {
+  foreignKey: 'serviceBookingId'
 })
 
 Chat.belongsToMany(Resident, {

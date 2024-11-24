@@ -6,25 +6,45 @@ const billModel = {
     autoIncrement: true,
     primaryKey: true
   },
+  billName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'Bill'
+  },
   residentId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    billType: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    billAmount: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false
-    },
-    billDate: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    billStatus: {
-      type: DataTypes.STRING,
-      allowNull: false
+    references: {
+      model: 'Residents',
+      key: 'residentId'
     }
+  },
+  billAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
+  },
+  billDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  billStatus: {
+    type: DataTypes.ENUM('UNPAID', 'PAID'),
+    allowNull: false,
+    defaultValue: 'UNPAID'
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   }
 }
 

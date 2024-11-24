@@ -1,11 +1,4 @@
-const {
-  User,
-  Resident,
-  Apartment,
-  Floor,
-  Building,
-  Vehicle
-} = require('../Model/ModelDefinition')
+const { User } = require('../Model/ModelDefinition')
 const jwt = require('jsonwebtoken')
 
 const verifyToken = async (req, res, next) => {
@@ -20,7 +13,6 @@ const verifyToken = async (req, res, next) => {
     const { user, resident, admin } = decoded.payload
 
     const check = await User.findOne({ where: { userId: user.userId } })
-
     if (!check) {
       return res.status(403).json({ message: 'User not found' })
     }
@@ -30,7 +22,6 @@ const verifyToken = async (req, res, next) => {
     }
 
     const userRoleId = user.roleId
-
     if (userRoleId === 1) {
       req.user = user
       req.admin = admin
@@ -45,7 +36,15 @@ const verifyToken = async (req, res, next) => {
 
     next()
   } catch (err) {
-    return res.status(403).json({ message: 'Invalid or expired token' })
+    if (err.name === 'TokenExpiredError') {
+      return res
+        .status(401)
+        .json({ message: 'Token has expired', expiredAt: err.expiredAt })
+    } else if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' })
+    } else {
+      return res.status(500).json({ message: 'Internal server error' })
+    }
   }
 }
 

@@ -11,6 +11,9 @@ SELECT * FROM "Files"
 SELECT * FROM "MessageFiles"
 SELECT * FROM "Services"
 SELECT * FROM "BuildingServices"
+SELECT * FROM "Payments"
+SELECT * FROM "Bills"
+SELECT * FROM "ServiceBookings"
 INSERT INTO "Roles" ("roleName", "createdAt", "updatedAt") VALUES
 ('Admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('Resident', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

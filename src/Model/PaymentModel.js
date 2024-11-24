@@ -7,7 +7,7 @@ const paymentModel = {
     primaryKey: true
   },
   paymentAmount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.DECIMAL(10, 2),
     allowNull: false
   },
   paymentDate: {
@@ -16,7 +16,8 @@ const paymentModel = {
   },
   paymentStatus: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    defaultValue: 'Pending'
   }
 }
 

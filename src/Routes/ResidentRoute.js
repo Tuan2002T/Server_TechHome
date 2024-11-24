@@ -35,6 +35,14 @@ const {
 const {
   getAllBuildingServices
 } = require('../Controller/ResidentController/Service')
+const {
+  getAllBills,
+  createBill
+} = require('../Controller/ResidentController/Bills')
+const {
+  createPayment,
+  paymentWebhook
+} = require('../Controller/ResidentController/Payment')
 
 router.post('/login', loginResident)
 router.put('/updateTokenFCM', auth, updateTokenFCM)
@@ -67,5 +75,11 @@ router.get(
   auth,
   getAllBuidlingsAndFloorsAndApartments
 )
+
+router.get('/getAllBills', auth, getAllBills)
+router.post('/createBill', auth, createBill)
+
+router.post('/createPayment', auth, createPayment)
+router.post('/paymentWebhook', paymentWebhook)
 
 module.exports = router
