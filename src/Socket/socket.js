@@ -1,9 +1,9 @@
 const { Server } = require('socket.io')
 
 const createSocket = (server) => {
-  const members = []
-  const usersOnline = []
-  let chatRooms = []
+  const usersOnline = [] // { userId, socketId }
+  let chatRooms = [] // { chatId, users: [{ userId, socketId }] }
+
   const io = new Server(server, {
     cors: {
       origin: '*',
@@ -14,69 +14,106 @@ const createSocket = (server) => {
   })
 
   io.on('connection', (socket) => {
-    console.log('User connected : ', socket.id)
+    console.log('User connected:', socket.id)
 
     socket.on('userOnline', (userId) => {
-      usersOnline.push({ userId, socketId: socket.id })
-      console.log(usersOnline)
+      const existingUser = usersOnline.find((user) => user.userId === userId)
+      if (existingUser) {
+        existingUser.socketId = socket.id
+      } else {
+        usersOnline.push({ userId, socketId: socket.id })
+      }
+      console.log('Users online:', usersOnline)
     })
 
     socket.on('userOffline', (userId) => {
-      usersOnline.splice(usersOnline.indexOf(userId), 1)
-      console.log(usersOnline)
+      const userIndex = usersOnline.findIndex((user) => user.userId === userId)
+      if (userIndex !== -1) {
+        usersOnline.splice(userIndex, 1)
+      }
+      console.log('Users online:', usersOnline)
     })
 
     socket.on('joinChat', (chatId) => {
-      console.log('Joining chat : ', chatId)
+      console.log('Joining chat:', chatId)
 
       const user = usersOnline.find((user) => user.socketId === socket.id)
-      console.log(user)
-
-      const existingChat = chatRooms.find((room) => room.chatId === chatId)
-
-      if (existingChat) {
-        existingChat.users.push(user)
-      } else {
-        chatRooms.push({ chatId, users: [user] })
+      if (!user) {
+        console.error('User not found for socket:', socket.id)
+        return
       }
-      console.log(chatRooms)
+
+      let chatRoom = chatRooms.find((room) => room.chatId === chatId)
+      if (!chatRoom) {
+        chatRoom = { chatId, users: [] }
+        chatRooms.push(chatRoom)
+      }
+
+      const isUserInRoom = chatRoom.users.some((u) => u.socketId === socket.id)
+      if (!isUserInRoom) {
+        chatRoom.users.push(user)
+      }
+      console.log('Chat rooms:', chatRooms)
     })
 
+    // Thoát phòng chat
     socket.on('outChat', (chatId) => {
       const chatRoom = chatRooms.find((room) => room.chatId === chatId)
-
       if (chatRoom) {
-        const userIndex = chatRoom.users.findIndex(
-          (user) => user.socketId === socket.id
+        chatRoom.users = chatRoom.users.filter(
+          (user) => user.socketId !== socket.id
         )
 
-        if (userIndex !== -1) {
-          chatRoom.users.splice(userIndex, 1)
-
-          if (chatRoom.users.length === 0) {
-            chatRooms = chatRooms.filter((room) => room.chatId !== chatId)
-          }
+        if (chatRoom.users.length === 0) {
+          chatRooms = chatRooms.filter((room) => room.chatId !== chatId)
         }
       }
-      console.log(chatRooms)
+      console.log('Chat rooms:', chatRooms)
     })
 
     socket.on('sendMessage', (message, chatId) => {
       const chatRoom = chatRooms.find((room) => room.chatId === chatId)
+      if (!chatRoom) {
+        console.error(`Chat room not found for chatId: ${chatId}`)
+        return
+      }
+
       chatRoom.users.forEach((user) => {
         if (user.socketId !== socket.id) {
-          io.to(user.socketId).emit('receiveMessage', message);
+          io.to(user.socketId).emit('receiveMessage', message)
         }
-      });
+      })
     })
 
     socket.on('deleteMessage', (message) => {
-      io.to(message.chatId).emit('deleteMessage', message)
+      const chatRoom = chatRooms.find((room) => room.chatId === message.chatId)
+      if (!chatRoom) {
+        console.error(`Chat room not found for chatId: ${message.chatId}`)
+        return
+      }
+
+      chatRoom.users.forEach((user) => {
+        io.to(user.socketId).emit('deleteMessage', message)
+      })
     })
 
     socket.on('disconnect', () => {
-      usersOnline.splice(usersOnline.indexOf(socket.id), 1)
-      console.log('User disconnected')
+      console.log('User disconnected:', socket.id)
+
+      const userIndex = usersOnline.findIndex(
+        (user) => user.socketId === socket.id
+      )
+      if (userIndex !== -1) {
+        usersOnline.splice(userIndex, 1)
+      }
+
+      chatRooms.forEach((room) => {
+        room.users = room.users.filter((user) => user.socketId !== socket.id)
+      })
+      chatRooms = chatRooms.filter((room) => room.users.length > 0)
+
+      console.log('Users online:', usersOnline)
+      console.log('Chat rooms:', chatRooms)
     })
   })
 }
