@@ -33,9 +33,6 @@ const sendMessages = async (req, res) => {
       return res.status(404).json('Chat not found')
     }
 
-    console.log(chat.adminId)
-    console.log(req.user.userId)
-
     if (
       !chat.Residents.some((resident) => resident.userId === req.user.userId) &&
       !chat.adminId === req.user.userId
@@ -51,14 +48,16 @@ const sendMessages = async (req, res) => {
     })
 
     const files = req.files
-    console.log(files);
+    console.log(files)
 
     const checkMimetype = files.some(
       (file) =>
-        !['image', 'video', 'document', 'application', 'text'].includes(file.mimetype.split('/')[0])
-    );
+        !['image', 'video', 'document', 'application', 'text'].includes(
+          file.mimetype.split('/')[0]
+        )
+    )
 
-    console.log(checkMimetype);
+    console.log(checkMimetype)
 
     if (checkMimetype) {
       return res.status(400).json('Invalid file type')
@@ -69,7 +68,7 @@ const sendMessages = async (req, res) => {
     if (files && files.length > 0) {
       const fileUrls = await uploadMultipleToS3(files, bucketName, 'chat/')
 
-      url = fileUrls
+      // url = fileUrls
       for (const [index, fileUrl] of fileUrls.entries()) {
         const fileType = getFileTypeFromMimeType(files[index].mimetype)
 
@@ -80,7 +79,12 @@ const sendMessages = async (req, res) => {
           fileSize: files[index].size,
           fileDate: new Date()
         })
-
+        url.push({
+          fileId: file.fileId,
+          fileName: file.fileName,
+          fileUrl: file.fileUrl,
+          fileType: file.fileType
+        })
         await message.addFile(file)
       }
     }

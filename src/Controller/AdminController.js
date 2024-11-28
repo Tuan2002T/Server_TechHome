@@ -57,10 +57,14 @@ const loginAdmin = async (req, res) => {
 
     const payload = { user, admin }
     user.token = null
-    const token = jwtToken(payload)
+    user.refreshToken = null
+
+    const token = jwtToken.jwtToken(payload)
+    const refreshToken = jwtToken.jwtRefreshToken(payload)
     user.token = token
+    user.refreshToken = refreshToken
     user.save()
-    res.status(200).json({ user, admin, token })
+    res.status(200).json({ user, admin, token, refreshToken })
   } catch (error) {
     console.error('Error during admin login:', error)
     res.status(500).json({ message: 'An internal error occurred' })

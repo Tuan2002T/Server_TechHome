@@ -32,6 +32,10 @@ const userModel = {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  refreshToken: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
 }
 
 module.exports = userModel

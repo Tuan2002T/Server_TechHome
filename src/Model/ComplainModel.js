@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize')
 
 const complainModel = {
-  complainId: {
+  complaintId: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true

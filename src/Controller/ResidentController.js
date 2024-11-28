@@ -164,11 +164,21 @@ const loginResident = async (req, res) => {
       return res.status(400).json({ message: 'Incorrect password' })
     }
     user.token = null
-    const payload = { user, resident }
-    const token = jwtToken(payload)
+    user.refreshToken = null
+
+    const payload = {
+      user: {
+        userId: user.userId,
+        roleId: user.roleId
+      },
+      resident
+    }
+    const token = jwtToken.jwtToken(payload)
+    const refreshToken = jwtToken.jwtRefreshToken(payload)
     user.token = token
+    user.refreshToken = refreshToken
     user.save()
-    res.status(200).json({ user, resident, token })
+    res.status(200).json({ user, resident, token, refreshToken })
   } catch (error) {
     console.error('Error during login:', error)
     res.status(500).json({ message: 'An internal error occurred' })
@@ -295,8 +305,8 @@ const getResidentNoActiveByIdcard = async (req, res) => {
       return res.status(400).json({ message: 'User not found' })
     }
     const mergedData = {
-      ...user.dataValues, // Dữ liệu từ user
-      ...resident.dataValues // Dữ liệu từ resident
+      ...user.dataValues,
+      ...resident.dataValues
     }
 
     res.status(200).json(mergedData)
@@ -307,12 +317,11 @@ const getResidentNoActiveByIdcard = async (req, res) => {
 }
 
 const generateOTP = () => {
-  // Tạo mã OTP ngẫu nhiên từ 100000 đến 999999
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
 const sentOTPHandler = async (req, res) => {
-  const { to } = req.body // Lấy chỉ số liên hệ từ yêu cầu, không lấy otp
+  const { to } = req.body
 
   if (!to) {
     return res.status(400).json({

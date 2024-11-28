@@ -56,7 +56,6 @@ const createSocket = (server) => {
       console.log('Chat rooms:', chatRooms)
     })
 
-    // Thoát phòng chat
     socket.on('outChat', (chatId) => {
       const chatRoom = chatRooms.find((room) => room.chatId === chatId)
       if (chatRoom) {
@@ -85,15 +84,15 @@ const createSocket = (server) => {
       })
     })
 
-    socket.on('deleteMessage', (message) => {
-      const chatRoom = chatRooms.find((room) => room.chatId === message.chatId)
+    socket.on('deleteMessage', (chatId, messageId) => {
+      const chatRoom = chatRooms.find((room) => room.chatId === chatId)
       if (!chatRoom) {
         console.error(`Chat room not found for chatId: ${message.chatId}`)
         return
       }
 
       chatRoom.users.forEach((user) => {
-        io.to(user.socketId).emit('deleteMessage', message)
+        io.to(user.socketId).emit('deleteMessage', messageId)
       })
     })
 

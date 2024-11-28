@@ -79,8 +79,22 @@ const sendComplaint = async (req, res) => {
 
 const deleteComplaint = async (req, res) => {
   try {
-    await Complaint.findByIdAndDelete(req.params.id)
-    res.status(200).json({ message: 'Complaint deleted successfully' })
+    if (req.user.roleId !== 2) {
+      return res.status(403).json({ message: 'Forbidden' })
+    }
+
+    const complaintId = req.params.id
+
+    const complaint = await Complaint.findOne({
+      where: { complaintId, residentId: req.resident.residentId }
+    })
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' })
+    }
+
+    await complaint.destroy()
+    res.status(202).json({ message: 'Complaint deleted' })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
