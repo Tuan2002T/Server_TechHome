@@ -1,9 +1,58 @@
-const { Floor } = require('../../Model/ModelDefinition')
+const {
+  Floor,
+  Building,
+  Apartment,
+  Resident,
+  sequelize
+} = require('../../Model/ModelDefinition')
 
 const getAllFloors = async (req, res) => {
   try {
-    const floors = await Floor.findAll()
-    res.status(200).json(floors)
+    // Get all floors with associated building data
+    const floors = await Floor.findAll({
+      include: [
+        {
+          model: Building,
+          attributes: ['buildingName']
+        },
+        {
+          model: Apartment,
+          attributes: ['apartmentId'],
+          include: [
+            {
+              model: Resident,
+              through: {
+                attributes: []
+              }
+            }
+          ]
+        }
+      ],
+      order: [['floorNumber', 'ASC']]
+    })
+
+    // Transform the data to include total residents
+    const formattedFloors = floors.map((floor) => {
+      // Count total unique residents across all apartments on this floor
+      const uniqueResidents = new Set()
+      floor.Apartments.forEach((apartment) => {
+        apartment.Residents.forEach((resident) => {
+          uniqueResidents.add(resident.residentId)
+        })
+      })
+
+      return {
+        floorId: floor.floorId,
+        floorNumber: floor.floorNumber,
+        buildingId: floor.buildingId,
+        buildingName: floor.Building ? floor.Building.buildingName : null,
+        totalResidents: uniqueResidents.size,
+        createdAt: floor.createdAt,
+        updatedAt: floor.updatedAt
+      }
+    })
+
+    res.status(200).json({ status: true, data: formattedFloors })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
