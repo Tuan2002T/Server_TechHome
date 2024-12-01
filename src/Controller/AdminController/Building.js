@@ -1,4 +1,11 @@
-const { Building, Floor } = require('../../Model/ModelDefinition')
+const {
+  Building,
+  Floor,
+  Apartment,
+  Resident,
+  sequelize
+} = require('../../Model/ModelDefinition')
+const { Op } = require('sequelize')
 
 const getAllBuildings = async (req, res) => {
   try {
@@ -6,8 +13,36 @@ const getAllBuildings = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
-    const buildings = await Building.findAll()
-    res.status(200).json({ status: true, data: buildings })
+    const buildings = await Building.findAll({
+      attributes: [
+        'buildingId',
+        'buildingName',
+        'buildingAddress',
+        'createdAt',
+        'updatedAt',
+        [
+          sequelize.literal(`(
+            SELECT COUNT(DISTINCT "Residents"."residentId")
+            FROM "Floors"
+            LEFT JOIN "Apartments" ON "Apartments"."floorId" = "Floors"."floorId"
+            LEFT JOIN "ResidentApartments" ON "ResidentApartments"."apartmentId" = "Apartments"."apartmentId"
+            LEFT JOIN "Residents" ON "Residents"."residentId" = "ResidentApartments"."residentId"
+            WHERE "Floors"."buildingId" = "Building"."buildingId"
+          )`),
+          'totalResidents'
+        ]
+      ]
+    })
+
+    const formattedBuildings = buildings.map((building) => ({
+      ...building.dataValues,
+      totalResidents: parseInt(building.dataValues.totalResidents) || 0
+    }))
+
+    res.status(200).json({
+      status: true,
+      data: formattedBuildings
+    })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
