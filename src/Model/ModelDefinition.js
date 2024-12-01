@@ -242,13 +242,16 @@ Event.belongsTo(Building, {
   onDelete: 'CASCADE'
 })
 
-Bill.hasMany(Payment, {
+Bill.belongsToMany(Payment, {
+  through: 'BillPayment',
   foreignKey: 'billId',
-  onDelete: 'SET NULL'
+  otherKey: 'paymentId'
 })
-Payment.belongsTo(Bill, {
-  foreignKey: 'billId',
-  onDelete: 'CASCADE'
+
+Payment.belongsToMany(Bill, {
+  through: 'BillPayment',
+  foreignKey: 'paymentId',
+  otherKey: 'billId'
 })
 
 ServiceBooking.hasOne(Bill, {

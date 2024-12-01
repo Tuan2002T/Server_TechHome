@@ -1,10 +1,11 @@
 const { Server } = require('socket.io')
 
-const createSocket = (server) => {
-  const usersOnline = [] // { userId, socketId }
-  let chatRooms = [] // { chatId, users: [{ userId, socketId }] }
+let io
+const usersOnline = []
+let chatRooms = []
 
-  const io = new Server(server, {
+const createSocket = (server) => {
+  io = new Server(server, {
     cors: {
       origin: '*',
       methods: ['GET', 'POST'],

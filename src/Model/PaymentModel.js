@@ -18,6 +18,11 @@ const paymentModel = {
     type: DataTypes.STRING,
     allowNull: false,
     defaultValue: 'Pending'
+  },
+  orderCode: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: null
   }
 }
 
