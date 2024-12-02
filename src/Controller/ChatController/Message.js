@@ -14,6 +14,10 @@ const {
 
 const sendMessages = async (req, res) => {
   try {
+    // if (req.user.roleId !== 1) {
+    //   return res.status(403).json('You are not allowed to send messages');
+    // }
+
     const chat = await Chat.findOne({
       where: { chatId: req.params.id },
       include: {
@@ -44,6 +48,7 @@ const sendMessages = async (req, res) => {
     })
 
     const files = req.files
+    console.log(files)
 
     const checkMimetype = files.some(
       (file) =>
@@ -51,6 +56,8 @@ const sendMessages = async (req, res) => {
           file.mimetype.split('/')[0]
         )
     )
+
+    console.log(checkMimetype)
 
     if (checkMimetype) {
       return res.status(400).json('Invalid file type')
@@ -61,6 +68,7 @@ const sendMessages = async (req, res) => {
     if (files && files.length > 0) {
       const fileUrls = await uploadMultipleToS3(files, bucketName, 'chat/')
 
+      // url = fileUrls
       for (const [index, fileUrl] of fileUrls.entries()) {
         const fileType = getFileTypeFromMimeType(files[index].mimetype)
 
