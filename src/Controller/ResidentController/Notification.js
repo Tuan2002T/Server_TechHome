@@ -42,7 +42,7 @@ const readNotification = async (req, res) => {
     }
 
     const notification = await Notification.findOne({
-      where: { notificationId: req.params.notificationId } // sửa lại thành id vì là khóa chính
+      where: { notificationId: req.params.notificationId }
     })
 
     if (!notification) {
