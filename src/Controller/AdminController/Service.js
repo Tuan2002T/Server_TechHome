@@ -1,13 +1,31 @@
-const { Service, Building } = require('../../Model/ModelDefinition')
+const {
+  Service,
+  ServiceBooking,
+  Building
+} = require('../../Model/ModelDefinition')
 
-const getAllServices = async (req, res) => {
+const getServices = async (req, res) => {
   try {
     if (req.user.roleId !== 1) {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
     const services = await Service.findAll()
-    res.status(200).json(services)
+    res.status(200).json({ status: true, data: services })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+const getServiceBookings = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    const rs = await ServiceBooking.findAll()
+    res.status(200).json({ status: true, data: rs })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -130,7 +148,8 @@ const deleteService = async (req, res) => {
 }
 
 module.exports = {
-  getAllServices,
+  getServices,
+  getServiceBookings,
   getServiceById,
   createService,
   updateService,

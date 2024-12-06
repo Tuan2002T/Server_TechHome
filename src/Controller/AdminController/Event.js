@@ -1,4 +1,4 @@
-const { Event } = require('../../Model/ModelDefinition')
+const { Event, Building } = require('../../Model/ModelDefinition')
 
 const getAllEvents = async (req, res) => {
   try {
@@ -6,9 +6,11 @@ const getAllEvents = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
-    const events = await Event.findAll()
+    const events = await Event.findAll({
+      include: Building
+    })
 
-    res.status(200).json(events)
+    res.status(200).json({ status: true, data: events })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

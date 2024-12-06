@@ -1,6 +1,7 @@
 const {
   Apartment,
   Floor,
+  Building,
   Resident,
   User
 } = require('../../Model/ModelDefinition')
@@ -11,13 +12,59 @@ const getAllApartments = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
-    const apartments = await Apartment.findAll()
-    console.log('apartments')
+    // Get all apartments with related data
+    const apartments = await Apartment.findAll({
+      include: [
+        {
+          model: Floor,
+          include: [
+            {
+              model: Building,
+              attributes: ['buildingName']
+            }
+          ],
+          attributes: ['floorNumber']
+        },
+        {
+          model: Resident,
+          through: {
+            attributes: [] // Exclude junction table attributes
+          },
+          include: [
+            {
+              model: User,
+              attributes: ['fullname']
+            }
+          ],
+          attributes: ['residentId']
+        }
+      ]
+    })
 
-    res.status(200).json(apartments)
+    // Transform the data to include only what we need
+    const formattedApartments = apartments.map((apartment) => {
+      return {
+        apartmentId: apartment.apartmentId,
+        apartmentNumber: apartment.apartmentNumber,
+        apartmentType: apartment.apartmentType,
+        buildingName: apartment.Floor?.Building?.buildingName || 'N/A',
+        floorNumber: apartment.Floor?.floorNumber || 'N/A',
+        totalResidents: apartment.Residents?.length || 0,
+        residents:
+          apartment.Residents?.map((resident) => ({
+            residentId: resident.residentId,
+            fullname: resident.User?.fullname || 'N/A'
+          })) || []
+      }
+    })
+
+    res.status(200).json({
+      status: true,
+      data: formattedApartments,
+    })
   } catch (error) {
     console.log(error)
-    res.status(500).json({ message: 'Internal server error1' })
+    res.status(500).json({ message: 'Internal server error' })
   }
 }
 
@@ -223,7 +270,7 @@ const getResidentByApartmentId = async (req, res) => {
       })
     )
 
-    res.status(200).json({status: true, data: residents})
+    res.status(200).json({ status: true, data: residents })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

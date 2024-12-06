@@ -22,7 +22,7 @@ const getAllResidents = async (req, res) => {
       ]
     })
 
-    res.status(200).json(residents)
+    res.status(200).json({ status: true, data: residents })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -125,9 +125,7 @@ const registerResident = async (req, res) => {
         .json({ message: 'Username or ID card already exists' })
     }
 
-    const am = await Apartment.findOne({
-      where: { aparmentId: apartment }
-    })
+    const am = await Apartment.findByPk(apartment)
 
     if (!am) {
       return res.status(400).json({ message: 'Apartment not found' })

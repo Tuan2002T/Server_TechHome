@@ -22,6 +22,23 @@ const getAllBuildings = async (req, res) => {
         'updatedAt',
         [
           sequelize.literal(`(
+            SELECT COUNT(DISTINCT "Floors"."floorId")
+            FROM "Floors"
+            WHERE "Floors"."buildingId" = "Building"."buildingId"
+          )`),
+          'totalFloors'
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(DISTINCT "Apartments"."apartmentId")
+            FROM "Floors"
+            LEFT JOIN "Apartments" ON "Apartments"."floorId" = "Floors"."floorId"
+            WHERE "Floors"."buildingId" = "Building"."buildingId"
+          )`),
+          'totalApartments'
+        ],
+        [
+          sequelize.literal(`(
             SELECT COUNT(DISTINCT "Residents"."residentId")
             FROM "Floors"
             LEFT JOIN "Apartments" ON "Apartments"."floorId" = "Floors"."floorId"
@@ -36,6 +53,8 @@ const getAllBuildings = async (req, res) => {
 
     const formattedBuildings = buildings.map((building) => ({
       ...building.dataValues,
+      totalFloors: parseInt(building.dataValues.totalFloors) || 0,
+      totalApartments: parseInt(building.dataValues.totalApartments) || 0,
       totalResidents: parseInt(building.dataValues.totalResidents) || 0
     }))
 

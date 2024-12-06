@@ -4,7 +4,7 @@ const validator = require('validator')
 const { User, Admin, Resident, Roles } = require('../Model/ModelDefinition')
 const { Op } = require('sequelize')
 const { deleteFromS3, uploadToS3, bucketName } = require('../AWS/s3')
-const jwtToken = require('../JWT/jwt')
+const {jwtToken, jwtRefreshToken} = require('../JWT/jwt')
 
 const loginAdmin = async (req, res) => {
   try {
@@ -59,12 +59,78 @@ const loginAdmin = async (req, res) => {
     user.token = null
     user.refreshToken = null
 
-    const token = jwtToken.jwtToken(payload)
-    const refreshToken = jwtToken.jwtRefreshToken(payload)
+    const token = jwtToken(payload)
+    const refreshToken = jwtRefreshToken(payload)
     user.token = token
     user.refreshToken = refreshToken
     user.save()
     res.status(200).json({ user, admin, token, refreshToken })
+  } catch (error) {
+    console.error('Error during admin login:', error)
+    res.status(500).json({ message: 'An internal error occurred' })
+  }
+}
+
+// return token and refresh token
+const authentication = async (req, res) => {
+  try {
+    const { username, email, password } = req.body
+
+    if (!email && !username && !password) {
+      return res
+        .status(400)
+        .json({ message: 'Username, email, or password is required' })
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: 'Password is required' })
+    }
+
+    if (email && !validator.isEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email' })
+    }
+
+    const user = await User.findOne({
+      where: {
+        [Op.and]: [
+          { roleId: 1 }, // Kiểm tra roleId của admin
+          {
+            [Op.or]: [
+              username ? { username } : undefined,
+              email ? { email } : undefined
+            ].filter(Boolean)
+          }
+        ]
+      }
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
+    const admin = await Admin.findOne({
+      where: { userId: user.userId }
+    })
+
+    if (!admin) {
+      return res.status(400).json({ message: 'Admin not found' })
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Incorrect password' })
+    }
+
+    const payload = { user, admin }
+    user.token = null
+    user.refreshToken = null
+
+    const token = jwtToken(payload)
+    const refreshToken = jwtRefreshToken(payload)
+    user.token = token
+    user.refreshToken = refreshToken
+    user.save()
+    res.status(200).json({ token, refreshToken })
   } catch (error) {
     console.error('Error during admin login:', error)
     res.status(500).json({ message: 'An internal error occurred' })
@@ -173,5 +239,6 @@ module.exports = {
   loginAdmin,
   getCurrentAdmin,
   getAdminById,
-  updateAdmin
+  updateAdmin,
+  authentication
 }
