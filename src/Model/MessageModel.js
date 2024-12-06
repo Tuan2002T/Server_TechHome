@@ -20,7 +20,7 @@ const messageModel = {
   },
   content: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   sentAt: {
     type: DataTypes.DATE,

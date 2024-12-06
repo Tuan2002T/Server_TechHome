@@ -11,9 +11,11 @@ const {
 const {
   sendMessages,
   deleteMessage,
-  getAllMessagesByChatId
+  getAllMessagesByChatId,
+  sendMessageAI
 } = require('../Controller/ChatController/Message')
 const { upload, uploadMultiple } = require('../AWS/s3')
+const { sendChatBot } = require('../Controller/ResidentController')
 
 router.post('/createChat', auth, createChat)
 router.post('/addMember/:id', auth, addMember)
@@ -23,5 +25,7 @@ router.post('/sendMessages/:id', auth, uploadMultiple, sendMessages)
 router.delete('/deleteMessage/:id', auth, deleteMessage)
 router.get('/getAllChats', auth, getAllChats)
 router.get('/getAllMessagesByChatId/:id', auth, getAllMessagesByChatId)
+router.post('/sendMessageAI', sendMessageAI)
+router.post('/sendChatBot', auth, sendChatBot)
 
 module.exports = router

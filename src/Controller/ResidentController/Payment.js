@@ -236,7 +236,7 @@ const paymentWebhook = async (req, res) => {
 
       await transaction.commit()
       console.log('Payment status updated to Failed.')
-      res.status(200).json({ message: 'Payment failed' })
+      res.status(200).json(req.body)
     }
   } catch (error) {
     await transaction.rollback()

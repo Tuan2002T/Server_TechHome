@@ -19,7 +19,7 @@ const chatModel = {
     }
   },
   chatType: {
-    type: DataTypes.ENUM('admin', 'community', 'apartment'),
+    type: DataTypes.ENUM('admin', 'bot', 'apartment'),
     allowNull: false
   },
   chatDate: {

@@ -11,6 +11,7 @@ const {
   File,
   User
 } = require('../../Model/ModelDefinition')
+const getAIResponse = require('../../OpenAI/openai')
 
 const sendMessages = async (req, res) => {
   try {
@@ -196,8 +197,23 @@ const getAllMessagesByChatId = async (req, res) => {
   }
 }
 
+const sendMessageAI = async (req, res) => {
+  try {
+    const { message } = req.body
+    const response = await getAIResponse(message)
+    console.log(response)
+
+    const aiReply = response.choices[0].message.content.trim()
+    res.status(200).json({ reply: aiReply })
+  } catch (error) {
+    console.error('Error:', error)
+    res.status(500).json({ error: 'Có lỗi xảy ra. Vui lòng thử lại sau.' })
+  }
+}
+
 module.exports = {
   sendMessages,
   deleteMessage,
-  getAllMessagesByChatId
+  getAllMessagesByChatId,
+  sendMessageAI
 }

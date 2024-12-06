@@ -14,6 +14,9 @@ const { bucketName, uploadToS3, deleteFromS3 } = require('../AWS/s3')
 const jwtToken = require('../JWT/jwt')
 const sendOTP = require('../OTP/sendOTP')
 const redisClient = require('../Redis/redis')
+const classifyMessage = require('./ChatController/Chatbot/chatbot')
+const classifyMessageNatural = require('./ChatController/Chatbot/natural')
+const getAIResponse = require('../OpenAI/openai')
 
 const activeResident = async (req, res) => {
   try {
@@ -387,7 +390,6 @@ const sentOTPHandler = async (req, res) => {
     })
   }
 
-  // Tạo mã OTP ngẫu nhiên
   const otp = generateOTP()
 
   try {
@@ -665,6 +667,19 @@ const updateTokenFCM = async (req, res) => {
   }
 }
 
+const sendChatBot = async (req, res) => {
+  try {
+    const { message } = req.body
+    const phanloai = await classifyMessage(message, req.resident.residentId)
+    const response = await getAIResponse(message, phanloai)
+    console.log(response)
+    res.status(200).json({ message: response })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 module.exports = {
   loginResident,
   activeResident,
@@ -675,5 +690,6 @@ module.exports = {
   sentOTPHandler,
   verifyOTP,
   forgotPassword,
-  getResidentApartmentInfo
+  getResidentApartmentInfo,
+  sendChatBot
 }
