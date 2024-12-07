@@ -5,10 +5,16 @@ dotenv.config()
 
 const pool = new Pool({
   user: process.env.USERNAMEPG,
-  host: process.env.HOST,
+  host: process.env.DB_HOST || 'postgres', // Use the service name from docker-compose
   database: process.env.DATABASE,
   password: process.env.PASSWORD,
-  port: process.env.PORT
+  port: process.env.PORT || 5432,
+  // Add connection retry logic
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+  retryDelay: 2000,
+  maxRetries: 5
 })
 
 const saltRounds = 10
@@ -1219,3 +1225,7 @@ async function insertData() {
 }
 
 insertData()
+
+module.exports = {
+  insertData
+}
