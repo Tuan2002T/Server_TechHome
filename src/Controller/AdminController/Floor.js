@@ -28,7 +28,7 @@ const getAllFloors = async (req, res) => {
           ]
         }
       ],
-      order: [['floorNumber', 'ASC']]
+      order: [['floorId', 'ASC']]
     })
 
     // Transform the data to include total residents

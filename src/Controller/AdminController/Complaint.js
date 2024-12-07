@@ -45,7 +45,8 @@ const getComplaints = async (req, res) => {
         {
           model: Apartment
         }
-      ]
+      ],
+      order: [['complaintId', 'ASC']]
     })
 
     const formattedComplaints = complaints.map((complaint) => {

@@ -62,7 +62,8 @@ const {
 } = require('../Controller/AdminController/Complaint')
 const { getFacilities } = require('../Controller/AdminController/Facility')
 const {
-  getNotifications
+  getNotifications,
+  pushNotifications
 } = require('../Controller/AdminController/Notification')
 const {
   getPayments,
@@ -160,6 +161,7 @@ router.get('/facility/getAll', auth, getFacilities)
 
 // manage notification
 router.get('/notification/getAll', auth, getNotifications)
+router.post('/notify', auth, pushNotifications)
 
 // manage payment
 router.get('/payment/getAll', auth, getPayments)

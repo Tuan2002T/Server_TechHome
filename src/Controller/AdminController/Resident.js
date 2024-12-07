@@ -19,7 +19,8 @@ const getAllResidents = async (req, res) => {
           where: { roleId: { [Op.ne]: 1 } },
           attributes: { exclude: ['password'] }
         }
-      ]
+      ],
+      order: [['residentId', 'ASC']]
     })
 
     res.status(200).json({ status: true, data: residents })

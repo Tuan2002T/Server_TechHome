@@ -38,7 +38,8 @@ const getAllApartments = async (req, res) => {
           ],
           attributes: ['residentId']
         }
-      ]
+      ],
+      order: [['apartmentId', 'ASC']]
     })
 
     // Transform the data to include only what we need
