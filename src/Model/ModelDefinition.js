@@ -1,13 +1,14 @@
 const { Sequelize, DataTypes } = require('sequelize')
 const dotenv = require('dotenv')
 dotenv.config()
+const isDocker = process.env.USE_DOCKER === 'true'
 
 const sequelize = new Sequelize(
   process.env.DATABASE,
   process.env.USERNAMEPG,
   process.env.PASSWORD,
   {
-    host: process.env.HOST,
+    host: isDocker ? process.env.HOST_DOCKER : process.env.HOST,
     port: process.env.PORT,
     dialect: 'postgres',
     logging: false

@@ -48,10 +48,9 @@ const bookingService = async (req, res) => {
     }
 
     const newBooking = await ServiceBooking.create(booking)
-
     const bill = {
       serviceBookingId: newBooking.serviceBookingId,
-      billAmount: service.servicePrice,
+      billAmount: service[0].servicePrice,
       residentId: req.resident.residentId,
       billDate: new Date(),
       billName: service[0].serviceName

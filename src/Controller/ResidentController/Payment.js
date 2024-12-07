@@ -168,6 +168,7 @@ const createPayment = async (req, res) => {
 const cancelledPayment = async (req, res) => {
   try {
     const { orderCode } = req.body
+
     const payment = await Payment.findOne({
       where: { orderCode }
     })

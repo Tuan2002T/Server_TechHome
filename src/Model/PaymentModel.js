@@ -15,7 +15,7 @@ const paymentModel = {
     allowNull: false
   },
   paymentStatus: {
-    type: DataTypes.ENUM('Pending', 'Success', 'Failed'),
+    type: DataTypes.ENUM('Pending', 'Success', 'Failed', 'Cancelled'),
     allowNull: false,
     defaultValue: 'Pending'
   },

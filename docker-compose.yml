@@ -6,10 +6,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
+      - postgres
+      - redis
     env_file:
       - .env
     volumes:
@@ -24,11 +22,6 @@ services:
       POSTGRES_DB: techhome
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     ports:
       - "5432:5432"
     volumes:
@@ -45,11 +38,6 @@ services:
       - redis-data:/data
     networks:
       - techhome-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
 volumes:
   postgres-data:

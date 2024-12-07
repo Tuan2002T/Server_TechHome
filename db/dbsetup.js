@@ -2,16 +2,12 @@ const { Pool } = require('pg');
 
 // Create a pool for connecting to the default 'postgres' database
 const pool = new Pool({
-  user: process.env.POSTGRES_USER || 'postgres',
-  host: process.env.POSTGRES_HOST || 'postgres', // Use the service name from docker-compose
-  database: 'postgres', // Connect to default database first
-  password: process.env.POSTGRES_PASSWORD || 'postgres',
-  port: parseInt(process.env.POSTGRES_PORT || '5432'),
-  // Add connection retry logic
-  max: 3, // maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
-  connectionTimeoutMillis: 2000, // return an error after 2 seconds if connection could not be established
-});
+  user: 'postgres',
+  host: 'localhost',
+  database: 'postgres',
+  password: 'postgres',
+  port: 5432
+})
 
 const createDatabase = async () => {
   let client;

@@ -1,5 +1,5 @@
 const { Client, Pool } = require('pg')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 const dotenv = require('dotenv')
 dotenv.config()
 
