@@ -6,8 +6,10 @@ const {
   Event,
   Bill,
   Payment,
-  Complaint
+  Complaint,
+  Vehicle
 } = require('../../../Model/ModelDefinition')
+
 const messageClassification = {
   facilities: [
     'thang máy',
@@ -153,14 +155,20 @@ async function classifyMessage(message, residentId) {
     vehicles: [],
     complaint: []
   }
+
   const data = await getResidentApartmentInfo(residentId)
+  const details = {}
 
   for (const [category, keywords] of Object.entries(messageClassification)) {
     for (const word of keywords) {
       const wordNoAccents = removeAccents(word.toLowerCase())
 
-      if (messageNoAccents.includes(wordNoAccents)) {
+      const regex = new RegExp(`\\b${wordNoAccents}\\b`, 'i')
+
+      if (regex.test(messageNoAccents)) {
         classificationResult[category].push(word)
+
+        if (!details[category]) details[category] = []
 
         if (category === 'facilities') {
           const facilities = await Facility.findAll({
@@ -172,7 +180,7 @@ async function classifyMessage(message, residentId) {
               }
             ]
           })
-          data.facilities = facilities
+          details[category] = facilities
         } else if (category === 'services') {
           const services = await Facility.findAll({
             include: [
@@ -183,14 +191,14 @@ async function classifyMessage(message, residentId) {
               }
             ]
           })
-          data.services = services
+          details[category] = services
         } else if (category === 'events') {
           const events = await Event.findAll({
             where: { buildingId: data.building.id }
           })
-          data.events = events
+          details[category] = events
         } else if (category === 'bills') {
-          const bills = await Bill.findAll({
+          const billsPayment = await Bill.findAll({
             where: { residentId: residentId },
             include: [
               {
@@ -199,17 +207,33 @@ async function classifyMessage(message, residentId) {
               }
             ]
           })
-          data.bills = bills
+
+          const bills = await Bill.findAll({
+            where: { residentId: residentId }
+          })
+          details['billPayment'] = billsPayment
+          details[category] = bills
         } else if (category === 'complaint') {
           const complaints = await Complaint.findAll({
             where: { residentId: residentId }
           })
-          data.complaints = complaints
+          details[category] = complaints
+        } else if (category === 'vehicles') {
+          const vehicles = await Vehicle.findAll({
+            where: { residentId: residentId }
+          })
+
+          details[category] = vehicles
         }
       }
     }
   }
-  return data
+
+  return {
+    residentMessage: message,
+    classificationResult,
+    details
+  }
 }
 
 module.exports = classifyMessage

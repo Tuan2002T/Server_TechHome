@@ -20,57 +20,39 @@ const getAIResponse = require('../OpenAI/openai')
 
 const activeResident = async (req, res) => {
   try {
-    const { email, fullname, idcard, phonenumber, username, password } =
-      req.body
-
-    if (
-      !email &&
-      !idcard &&
-      !phonenumber &&
-      !username &&
-      !password &&
-      !fullname
-    ) {
-      return res.status(400).json({
-        message:
-          'Email, ID card, fullname, password or phone number is required'
-      })
+    const {
+      residentId,
+      email,
+      fullname,
+      idcard,
+      phonenumber,
+      username,
+      password
+    } = req.body
+    if (!residentId) {
+      return res.status(400).json({ message: 'Resident ID is required' })
     }
-
-    const conditions = []
-    if (email) conditions.push({ email })
-    if (username) conditions.push({ username })
-
-    const user = await User.findOne({
-      where: { [Op.or]: conditions }
-    })
-
-    if (!user) {
-      return res.status(400).json({ message: 'User not found' })
-    }
-
-    const conditionsResident = []
-
-    if (idcard) conditionsResident.push({ idcard })
-    if (phonenumber) conditionsResident.push({ phonenumber })
 
     const resident = await Resident.findOne({
-      where: { [Op.or]: conditionsResident }
+      where: { residentId, active: false }
     })
 
     if (!resident) {
       return res.status(400).json({ message: 'Resident not found' })
     }
 
-    if (resident.userId !== user.userId) {
-      return res.status(400).json({ message: 'Invalid resident' })
-    }
+    const dataResident = {}
+    const dataUser = {}
+    if (email) dataUser.email = email
+    if (fullname) dataUser.fullname = fullname
+    if (username) dataUser.username = username
+    if (password) dataUser.password = password
+    if (idcard) dataResident.idcard = idcard
+    if (phonenumber) dataResident.phonenumber = phonenumber
+    dataResident.active = true
 
-    await User.update(conditions, { where: { userId: user.userId } })
-    conditionsResident.push({ active: 'active' })
-    await Resident.update(conditionsResident, {
-      where: { residentId: resident.residentId }
-    })
+    await User.update(dataUser, { where: { userId: residentId } })
+    await Resident.update(dataResident, { where: { residentId } })
 
     res.status(200).json({ message: 'Resident activated' })
   } catch (error) {
@@ -671,7 +653,9 @@ const sendChatBot = async (req, res) => {
   try {
     const { message } = req.body
     const phanloai = await classifyMessage(message, req.resident.residentId)
-    const response = await getAIResponse(message, phanloai)
+    const classificationResult = phanloai.classificationResult || {}
+    const details = phanloai.details || {}
+    const response = await getAIResponse(message, classificationResult, details)
     console.log(response)
     res.status(200).json({ message: response })
   } catch (error) {
