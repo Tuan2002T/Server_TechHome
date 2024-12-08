@@ -13,6 +13,7 @@ const {
   getAllBuildings,
   getBuildingById,
   createBuilding,
+  newBuilding,
   updateBuilding,
   deleteBuilding
 } = require('../Controller/AdminController/Building')
@@ -100,6 +101,7 @@ router.put('/update', auth, upload.single('file'), updateAdmin)
 router.get('/building/getAll', auth, getAllBuildings)
 router.get('/building/:id', auth, getBuildingById)
 router.post('/building', auth, createBuilding)
+router.post('/building/new', auth, newBuilding)
 router.put('/building/:id', auth, updateBuilding)
 router.delete('/building/:id', auth, deleteBuilding)
 

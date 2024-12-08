@@ -4,41 +4,71 @@ const dotenv = require('dotenv')
 dotenv.config()
 
 const pool = new Pool({
-  user: process.env.USERNAMEPG,
-  host: process.env.DB_HOST || 'postgres', // Use the service name from docker-compose
-  database: process.env.DATABASE,
-  password: process.env.PASSWORD,
-  port: process.env.PORT || 5432,
-  // Add connection retry logic
+  user: process.env.USERNAMEPG || 'postgres',
+  host: process.env.DB_HOST || 'postgres',
+  database: process.env.DATABASE || 'techhome',
+  password: process.env.PASSWORD || 'postgres',
+  port: parseInt(process.env.PORT) || 5432,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-  retryDelay: 2000,
-  maxRetries: 5
+  connectionTimeoutMillis: 5000,
+  // Add connection retry logic
+  retry: {
+    max: 5,
+    delay: 2000
+  }
 })
 
 const saltRounds = 10
+
+const insertWithTransaction = async (queryFunction) => {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await queryFunction(client)
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
 
 async function hashPassword(password) {
   const salt = await bcrypt.genSalt(saltRounds)
   return bcrypt.hash(password, salt)
 }
 
+// Modify each insert function to use the transaction wrapper
 async function insertRoles() {
-  const client = await pool.connect()
-  try {
-    await client.query('BEGIN')
-    await client.query(
-      `INSERT INTO "Roles" ("roleName", "createdAt", "updatedAt") VALUES ('Admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP), ('Resident', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);`
+  await insertWithTransaction(async (client) => {
+    // First check if roles exist
+    const existingRoles = await client.query(
+      `SELECT "roleName" FROM "Roles" WHERE "roleName" IN ('Admin', 'Resident')`
     )
-    await client.query('COMMIT')
-    console.log('Insert roles successfully')
-  } catch (error) {
-    await client.query('ROLLBACK')
-    console.error('Error insert roles', error)
-  } finally {
-    client.release()
-  }
+
+    // Get roles that don't exist yet
+    const existingRoleNames = existingRoles.rows.map((row) => row.roleName)
+    const rolesToInsert = ['Admin', 'Resident'].filter(
+      (role) => !existingRoleNames.includes(role)
+    )
+
+    // Only insert roles that don't exist
+    if (rolesToInsert.length > 0) {
+      const values = rolesToInsert
+        .map((role) => `('${role}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`)
+        .join(',')
+
+      await client.query(`
+        INSERT INTO "Roles" ("roleName", "createdAt", "updatedAt") 
+        VALUES ${values};
+      `)
+      console.log('New roles inserted successfully')
+    } else {
+      console.log('Roles already exist, skipping insertion')
+    }
+  })
 }
 
 async function insertUsers() {
@@ -1202,29 +1232,46 @@ async function insertBills() {
 }
 
 async function insertData() {
-  await insertRoles()
-  await insertUsers()
-  await insertBuildings()
-  await insertFloors()
-  await insertApartments()
-  await insertAdmins()
-  await insertResidents()
-  await insertResidentApartments()
-  await insertComplaints()
-  await insertVehicles()
-  await insertNotifications()
-  await insertFacilities()
-  await insertEvents()
-  await insertService()
-  await insertPayments()
-  await insertBuildingServices()
-  await insertBuildingFacilities()
-  await insertResidentNotifications()
-  await insertServiceBookings()
-  await insertBills()
-}
+  let client
+  try {
+    client = await pool.connect()
+    await client.query('BEGIN')
 
-insertData()
+    await insertRoles(client)
+    await insertUsers(client)
+    await insertBuildings(client)
+    await insertFloors(client)
+    await insertApartments(client)
+    await insertAdmins(client)
+    await insertResidents(client)
+    await insertResidentApartments(client)
+    await insertComplaints(client)
+    await insertVehicles(client)
+    await insertNotifications(client)
+    await insertFacilities(client)
+    await insertEvents(client)
+    await insertService(client)
+    await insertPayments(client)
+    await insertBuildingServices(client)
+    await insertBuildingFacilities(client)
+    await insertResidentNotifications(client)
+    await insertServiceBookings(client)
+    await insertBills(client)
+    await client.query('COMMIT')
+    console.log('All data inserted successfully')
+  } catch (error) {
+    if (client) {
+      await client.query('ROLLBACK')
+    }
+    console.error('Error during data insertion:', error)
+    throw error
+  } finally {
+    if (client) {
+      client.release()
+    }
+    await pool.end()
+  }
+}
 
 module.exports = {
   insertData

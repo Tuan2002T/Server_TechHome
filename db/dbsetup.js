@@ -1,71 +1,53 @@
-const { Pool } = require('pg');
-
-// Create a pool for connecting to the default 'postgres' database
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'postgres',
-  password: 'postgres',
-  port: 5432
-})
+const { Pool } = require('pg')
+require('dotenv').config()
 
 const createDatabase = async () => {
-  let client;
-  
+  // Connect to default postgres database first
+  const pool = new Pool({
+    user: process.env.USERNAMEPG || 'postgres',
+    host: process.env.DB_HOST || 'postgres',
+    database: 'postgres', // Connect to default database
+    password: process.env.PASSWORD || 'postgres',
+    port: parseInt(process.env.PORT) || 5432,
+    connectionTimeoutMillis: 5000
+  })
+
+  let client
   try {
-    // Wait for PostgreSQL to be ready
-    console.log('Attempting to connect to PostgreSQL...');
-    client = await pool.connect();
-    
-    // Check if database exists (case-insensitive query)
-    const result = await client.query(
-      "SELECT 1 FROM pg_database WHERE LOWER(datname) = LOWER('techhome')"
-    );
-    
-    if (result.rows.length === 0) {
-      // Create database if it doesn't exist
-      await client.query('CREATE DATABASE techhome WITH ENCODING = \'UTF8\'');
-      console.log('Database "techhome" created successfully!');
-    } else {
-      console.log('Database "techhome" already exists!');
+    client = await pool.connect()
+
+    // Check if database exists
+    const dbName = process.env.DATABASE || 'techhome'
+    const checkDb = await client.query(
+      'SELECT 1 FROM pg_database WHERE datname = $1',
+      [dbName]
+    )
+
+    if (checkDb.rows.length === 0) {
+      // Terminate existing connections
+      await client.query(
+        `
+        SELECT pg_terminate_backend(pid) 
+        FROM pg_stat_activity 
+        WHERE datname = $1 AND pid <> pg_backend_pid()`,
+        [dbName]
+      )
+
+      // Create database
+      await client.query(`CREATE DATABASE ${dbName}`)
+      console.log(`Database "${dbName}" created`)
     }
-    
+
+    return true
   } catch (err) {
-    console.error('Database setup error:', {
-      message: err.message,
-      code: err.code,
-      detail: err.detail,
-      hint: err.hint
-    });
-    
-    // If this is a connection error, provide more helpful message
-    if (err.code === 'ECONNREFUSED') {
-      console.error(`
-        Connection refused. Please check:
-        1. PostgreSQL service is running
-        2. Database host is correct (current: ${pool.options.host})
-        3. Port is correct (current: ${pool.options.port})
-        4. Network settings in docker-compose.yml
-      `);
-    }
-    
-    // Rethrow error to handle it in the calling code
-    throw err;
+    console.error('Database creation error:', err)
+    throw err
   } finally {
     if (client) {
-      await client.release();
+      await client.release()
     }
-    await pool.end();
+    await pool.end()
   }
-};
-
-// Only run if this file is being executed directly
-if (require.main === module) {
-  createDatabase()
-    .catch(err => {
-      console.error('Failed to setup database:', err);
-      process.exit(1);
-    });
 }
 
-module.exports = { createDatabase, pool };
+module.exports = { createDatabase }

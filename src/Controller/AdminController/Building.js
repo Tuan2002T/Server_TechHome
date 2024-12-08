@@ -68,6 +68,85 @@ const getAllBuildings = async (req, res) => {
   }
 }
 
+const newBuilding = async (req, res) => {
+  try {
+    const { buildingName, numOfFloor, numOfApartment } = req.body
+
+    // Input validation
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    if (!buildingName || !numOfFloor || !numOfApartment) {
+      return res.status(400).json({
+        message:
+          'Building name, number of floors, and number of apartments are required'
+      })
+    }
+
+    if (numOfFloor <= 0 || numOfApartment <= 0) {
+      return res.status(400).json({
+        message: 'Number of floors and apartments must be positive numbers'
+      })
+    }
+
+    // Create building and get ID in one step
+    const building = await Building.create({
+      buildingName,
+      buildingAddress: '123A'
+    })
+
+    const buildingId = building.buildingId
+
+    // Prepare bulk floor creation data
+    const floorsData = Array.from({ length: numOfFloor }, (_, i) => ({
+      buildingId,
+      floorNumber: i + 1
+    }))
+
+    // Bulk create floors
+    const floors = await Floor.bulkCreate(floorsData)
+
+    // Prepare bulk apartment creation data
+    const apartmentsData = floors.flatMap((floor) =>
+      Array.from({ length: numOfApartment }, (_, j) => ({
+        floorId: floor.floorId,
+        apartmentNumber: j + 1,
+        apartmentType: 'DEFAULT'
+      }))
+    )
+
+    // Bulk create apartments
+    await Apartment.bulkCreate(apartmentsData)
+
+    return res.status(201).json({
+      status: true,
+      message: 'Building created successfully',
+      building: {
+        buildingId,
+        buildingName,
+        buildingAddress: '123A',
+        numOfFloor,
+        numOfApartment
+      }
+    })
+  } catch (error) {
+    console.error('Error creating building:', error)
+
+    // Handle specific database errors
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({
+        message: 'Building with this name already exists'
+      })
+    }
+
+    return res.status(500).json({
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
+  }
+}
+
 const getBuildingById = async (req, res) => {
   try {
     if (req.user.roleId !== 1) {
@@ -189,6 +268,7 @@ module.exports = {
   getAllBuildings,
   getBuildingById,
   createBuilding,
+  newBuilding,
   updateBuilding,
   deleteBuilding
 }
