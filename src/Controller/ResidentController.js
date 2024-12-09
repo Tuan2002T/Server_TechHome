@@ -46,7 +46,8 @@ const activeResident = async (req, res) => {
     if (email) dataUser.email = email
     if (fullname) dataUser.fullname = fullname
     if (username) dataUser.username = username
-    if (password) dataUser.password = password
+
+    if (password) dataUser.password = await bcrypt.hash(password, 10)
     if (idcard) dataResident.idcard = idcard
     if (phonenumber) dataResident.phonenumber = phonenumber
     dataResident.active = true
