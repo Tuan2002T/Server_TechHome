@@ -103,7 +103,10 @@ const createPayment = async (req, res) => {
         .json({ message: 'One or more bills not found or already paid' })
     }
 
-    const totalAmount = bills.reduce((sum, bill) => sum + bill.billAmount, 0)
+    const totalAmount = bills.reduce((sum, bill) => {
+      const amount = parseFloat(bill.billAmount)
+      return !isNaN(amount) ? sum + amount : sum
+    }, 0)
 
     const payment = await Payment.create(
       {
@@ -131,9 +134,6 @@ const createPayment = async (req, res) => {
       price: Number(bill.billAmount)
     }))
 
-    console.log(totalAmount)
-    console.log(paymentItems)
-
     const requestPayment = {
       orderCode: payment.orderCode,
       amount: Number(totalAmount),
@@ -146,7 +146,6 @@ const createPayment = async (req, res) => {
     }
 
     const response = await payos.createPaymentLink(requestPayment)
-    console.log(response)
 
     await transaction.commit()
 
