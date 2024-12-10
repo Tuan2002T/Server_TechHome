@@ -9,9 +9,9 @@ const getAllChats = async (req, res) => {
         where: { adminId: req.admin.adminId }
       })
       const chats = await Chat.findAll({
-        where: { adminId: adminId.adminId }
+        // where: { adminId: adminId.adminId }
       })
-      return res.status(200).json(chats)
+      return res.status(200).json({ status: true, data: chats })
     }
 
     const chats = await Chat.findAll({
@@ -26,7 +26,7 @@ const getAllChats = async (req, res) => {
       ]
     })
 
-    res.status(200).json(chats)
+    res.status(200).json({ status: true, data: chats })
   } catch (error) {
     res.status(500).json({
       message: 'Error retrieving chats',

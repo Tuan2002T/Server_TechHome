@@ -7,7 +7,7 @@ const getAllServices = async (req, res) => {
     }
 
     const services = await Service.findAll()
-    res.status(200).json(services)
+    res.status(200).json({ status: true, data: services })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

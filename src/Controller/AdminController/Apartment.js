@@ -14,7 +14,7 @@ const getAllApartments = async (req, res) => {
     const apartments = await Apartment.findAll()
     console.log('apartments')
 
-    res.status(200).json(apartments)
+    res.status(200).json({ data: apartments })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error1' })
@@ -223,7 +223,7 @@ const getResidentByApartmentId = async (req, res) => {
       })
     )
 
-    res.status(200).json({status: true, data: residents})
+    res.status(200).json({ status: true, data: residents })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

@@ -22,7 +22,7 @@ const getAllResidents = async (req, res) => {
       ]
     })
 
-    res.status(200).json(residents)
+    res.status(200).json({ data: residents })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })

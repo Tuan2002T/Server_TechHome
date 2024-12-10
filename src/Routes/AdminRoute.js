@@ -4,6 +4,7 @@ const auth = require('../Middleware/auth')
 
 const {
   loginAdmin,
+  authentication,
   getCurrentAdmin,
   getAdminById,
   updateAdmin
@@ -12,6 +13,7 @@ const {
   getAllBuildings,
   getBuildingById,
   createBuilding,
+  newBuilding,
   updateBuilding,
   deleteBuilding
 } = require('../Controller/AdminController/Building')
@@ -52,6 +54,20 @@ const {
   unActiveResident,
   registerResident
 } = require('../Controller/AdminController/Resident')
+const { getAllFacilities } = require('../Controller/AdminController/Facilities')
+const { getVehicles } = require('../Controller/AdminController/Vehicle')
+const {
+  getNotifications
+} = require('../Controller/AdminController/Notification')
+const {
+  getComplaints,
+  addComplaint
+} = require('../Controller/AdminController/Complaint')
+const { getBills } = require('../Controller/AdminController/Bill')
+const {
+  getPayments,
+  addPayment
+} = require('../Controller/AdminController/Payment')
 
 const { upload } = require('../AWS/s3')
 router.get('/apartment', auth, (req, res) => {
@@ -74,6 +90,7 @@ router.get('/service', auth, (req, res) => {
 })
 
 router.post('/login', loginAdmin)
+router.post('/authentication', authentication)
 router.get('/current', auth, getCurrentAdmin)
 router.get('/:id', auth, getAdminById)
 router.put('/update', auth, upload.single('file'), updateAdmin)
@@ -82,6 +99,7 @@ router.put('/update', auth, upload.single('file'), updateAdmin)
 router.get('/building/getAll', auth, getAllBuildings)
 router.get('/building/:id', auth, getBuildingById)
 router.post('/building', auth, createBuilding)
+ router.post('/building/new', auth, newBuilding) // create a new building with default values for floors, apartments, and residents
 router.put('/building/:id', auth, updateBuilding)
 router.delete('/building/:id', auth, deleteBuilding)
 
@@ -125,5 +143,25 @@ router.get('/resident/getAll', auth, getAllResidents)
 router.get('/resident/:id', auth, getResidentById)
 router.put('/resident/:id', auth, unActiveResident)
 router.post('/registerResident', auth, registerResident)
+
+// manage facilities
+router.get('/facilities/getAll', auth, getAllFacilities)
+
+// manage vehicles
+router.get('/vehicles/getAll', auth, getVehicles)
+
+// manage notifications
+router.get('/notifications/getAll', auth, getNotifications)
+
+// manage complaints
+router.get('/complaints/getAll', auth, getComplaints)
+router.post('/complaints', auth, addComplaint)
+
+// manage bills
+router.get('/bills/getAll', auth, getBills)
+
+// manage payments
+router.get('/payments/getAll', auth, getPayments)
+router.post('/payments', auth, addPayment)
 
 module.exports = router
