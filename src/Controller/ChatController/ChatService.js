@@ -13,6 +13,7 @@ const getAllChats = async (req, res) => {
       })
       return res.status(200).json(chats)
     }
+    console.log('tới đây chưa', req.resident.residentId)
 
     const chats = await Chat.findAll({
       include: [
