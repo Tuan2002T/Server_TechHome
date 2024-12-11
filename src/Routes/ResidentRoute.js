@@ -31,7 +31,10 @@ const {
   getAllComplaints,
   sendComplaint,
   getAllBuidlingsAndFloorsAndApartments,
-  deleteComplaint
+  deleteComplaint,
+  getBuildings,
+  getFloorsByBuildingId,
+  getApartmentsByFloorId
 } = require('../Controller/ResidentController/Complaints')
 const {
   getAllBuildingServices
@@ -80,6 +83,9 @@ router.get(
   getAllBuidlingsAndFloorsAndApartments
 )
 router.delete('/deleteComplaint/:id', auth, deleteComplaint)
+router.get('/getBuildings', auth, getBuildings)
+router.get('/getFloorsByBuildingId/:id', auth, getFloorsByBuildingId)
+router.get('/getApartmentsByFloorId/:id', auth, getApartmentsByFloorId)
 
 router.get('/getAllBills', auth, getAllBills)
 router.post('/createBill', auth, createBill)

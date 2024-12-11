@@ -111,9 +111,43 @@ const getAllBuidlingsAndFloorsAndApartments = async (req, res) => {
   }
 }
 
+const getBuildings = async (req, res) => {
+  try {
+    const building = await Building.findAll()
+    console.log(building)
+
+    res.status(200).json(building)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+const getFloorsByBuildingId = async (req, res) => {
+  try {
+    const buildingId = req.params.id
+    const floors = await Floor.findAll({ where: { buildingId } })
+    res.status(200).json(floors)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+const getApartmentsByFloorId = async (req, res) => {
+  try {
+    const floorId = req.params.id
+    const apartments = await Apartment.findAll({ where: { floorId } })
+    res.status(200).json(apartments)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
 module.exports = {
   getAllComplaints,
   sendComplaint,
   deleteComplaint,
-  getAllBuidlingsAndFloorsAndApartments
+  getAllBuidlingsAndFloorsAndApartments,
+  getBuildings,
+  getFloorsByBuildingId,
+  getApartmentsByFloorId
 }

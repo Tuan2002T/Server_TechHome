@@ -1,6 +1,12 @@
 const { Op } = require('sequelize')
-const { Payment, Bill, sequelize } = require('../../Model/ModelDefinition')
+const {
+  Payment,
+  Bill,
+  sequelize,
+  Resident
+} = require('../../Model/ModelDefinition')
 const payos = require('../../Payment/PayOs')
+const { notificationPush } = require('../../FireBase/NotificationPush')
 
 // const createPayment = async (req, res) => {
 //   try {
@@ -228,6 +234,25 @@ const paymentWebhook = async (req, res) => {
       )
 
       await transaction.commit()
+      const bill = await Bill.findOne({
+        include: {
+          model: Payment,
+          as: 'payments',
+          through: {
+            attributes: []
+          }
+        },
+        where: { paymentId: payment.paymentId }
+      })
+
+      const resident = await Resident.findOne({
+        where: { residentId: bill[0].residentId }
+      })
+      notificationPush(
+        resident.tokenFCM,
+        'Payment successful',
+        `Payment for bill ${bill[0].billId} successful`
+      )
       console.log('Payment and bills updated successfully.')
       res.status(200).json({ message: 'Payment successful' })
     } else {
