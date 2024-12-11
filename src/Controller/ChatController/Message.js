@@ -4,6 +4,7 @@ const {
   getFileTypeFromMimeType,
   deleteMultipleFromS3
 } = require('../../AWS/s3')
+const { notificationPush } = require('../../FireBase/NotificationPush')
 const {
   Chat,
   Message,
@@ -96,6 +97,22 @@ const sendMessages = async (req, res) => {
         Files: url
       }
     }
+
+    chat.Residents.forEach(async (resident) => {
+      if (
+        resident.userId !== req.user.userId &&
+        resident.fcmToken !== null &&
+        resident.fcmToken !== ''
+      ) {
+        console.log('Sending notification to:', resident.fcmToken)
+
+        notificationPush(
+          resident.fcmToken,
+          'New message',
+          `${req.user.firstName} ${req.user.lastName} sent a message in ${chat.chatName}`
+        )
+      }
+    })
 
     res.status(201).json(response.message)
   } catch (error) {
@@ -197,6 +214,44 @@ const getAllMessagesByChatId = async (req, res) => {
   }
 }
 
+const getAllFilesByChatId = async (req, res) => {
+  try {
+    const chat = await Chat.findOne({
+      where: { chatId: req.params.id }
+    })
+
+    if (!chat) {
+      return res.status(404).json('Chat not found')
+    }
+
+    const messages = await Message.findAll({
+      where: { chatId: req.params.id },
+      include: {
+        model: File,
+        as: 'Files',
+        attributes: ['fileId', 'fileName', 'fileUrl', 'fileType'],
+        through: { attributes: [] }
+      }
+    })
+
+    const files = messages.reduce((acc, message) => {
+      const messageFiles = message.Files.map((file) => {
+        return {
+          ...file.get({ plain: true }),
+          messageId: message.messageId
+        }
+      })
+
+      return [...acc, ...messageFiles]
+    }, [])
+
+    res.status(200).json({ files: files })
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching files' })
+    console.log('Error getting files:', error)
+  }
+}
+
 const sendMessageAI = async (req, res) => {
   try {
     const { message } = req.body
@@ -215,5 +270,6 @@ module.exports = {
   sendMessages,
   deleteMessage,
   getAllMessagesByChatId,
-  sendMessageAI
+  sendMessageAI,
+  getAllFilesByChatId
 }
