@@ -1,9 +1,10 @@
 const { Op } = require('sequelize')
 const {
+  Apartment,
   Resident,
   User,
   Roles,
-  Apartment
+  sequelize
 } = require('../../Model/ModelDefinition')
 
 const getAllResidents = async (req, res) => {
@@ -19,10 +20,25 @@ const getAllResidents = async (req, res) => {
           where: { roleId: { [Op.ne]: 1 } },
           attributes: { exclude: ['password'] }
         }
-      ]
+      ],
+      // sort by id
+      order: [['residentId', 'ASC']]
     })
 
-    res.status(200).json({ data: residents })
+    const formatData = residents.map((resident) => {
+      return {
+        residentId: resident.residentId,
+        fullname: resident.User.fullname,
+        avatar: resident.User.avatar,
+        username: resident.User.username,
+        idcard: resident.idcard,
+        phonenumber: resident.phonenumber,
+        email: resident.User.email,
+        status: resident.active
+      }
+    })
+
+    res.status(200).json({ data: formatData })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -51,7 +67,12 @@ const getResidentById = async (req, res) => {
       return res.status(400).json({ message: 'Resident not found' })
     }
 
-    res.status(200).json(resident)
+    // get apartment of resident
+    const apartments = await resident.getApartments()
+
+    res
+      .status(200)
+      .json({ status: true, data: resident, apartment: apartments })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -74,9 +95,19 @@ const unActiveResident = async (req, res) => {
       return res.status(400).json({ message: 'Resident not found' })
     }
 
-    await resident.update({ active: false })
+    // await resident.update({ active: false })
 
-    res.status(200).json({ message: 'Resident unactivated' })
+    // if resident.active is true set active to false
+    if (resident.active) {
+      await resident.update({ active: false })
+    } else {
+      await resident.update({ active: true })
+    }
+
+    // const message
+    let message = resident.active ? 'Activated' : 'Deactivated'
+
+    res.status(200).json({ status: true, data: resident, message: message })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error' })
@@ -84,69 +115,187 @@ const unActiveResident = async (req, res) => {
 }
 
 const registerResident = async (req, res) => {
+  const t = await sequelize.transaction() // Start transaction
   try {
     if (req.user.roleId !== 1) {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
-    const { fullname, username, idcard, apartment } = req.body
+    const { fullname, idcard, apartmentId } = req.body
 
-    if (!fullname || !idcard || !username || !apartment) {
-      return res.status(400).json({ message: 'All fields are required' })
+    if (!fullname || !idcard) {
+      return res
+        .status(400)
+        .json({ message: 'Full name and ID card are required' })
     }
 
+    if (idcard.length !== 12) {
+      return res.status(400).json({ message: 'ID card must be 12 characters' })
+    }
+
+    const username = fullname.toLowerCase().replace(/\s/g, '') + Date.now()
+
     const role = await Roles.findOne({
-      where: { roleName: 'Resident' }
+      where: { roleId: 2 },
+      transaction: t
     })
 
     if (!role) {
       return res.status(400).json({ message: 'Role not found' })
     }
 
-    const user = await User.findOne({
-      where: {
-        username
+    const existingUser = await User.findOne({
+      where: { username },
+      transaction: t
+    })
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username already exists' })
+    }
+
+    const existingResident = await Resident.findOne({
+      where: { idcard },
+      transaction: t
+    })
+    if (existingResident) {
+      return res.status(400).json({ message: 'ID card already exists' })
+    }
+
+    const newUser = await User.create(
+      { fullname, username, roleId: role.roleId },
+      { transaction: t }
+    )
+
+    const newResident = await Resident.create(
+      { userId: newUser.userId, idcard },
+      { transaction: t }
+    )
+
+    // If apartmentId is provided, associate the resident with the apartment
+    if (apartmentId) {
+      const existingApartment = await Apartment.findByPk(apartmentId, {
+        transaction: t
+      })
+      if (!existingApartment) {
+        return res.status(400).json({ message: 'Apartment not found' })
       }
+
+      // Add the resident using the primary key or the instance of the Resident model
+      await existingApartment.addResident(newResident, { transaction: t })
+    }
+
+    await t.commit() // Commit transaction if everything is successful
+
+    res.status(201).json({
+      message: 'Resident created successfully',
+      data: { fullname, username, idcard }
+    })
+  } catch (error) {
+    await t.rollback() // Rollback transaction if there's an error
+    console.error('Error in registerResident:', error.message, error.stack)
+
+    res
+      .status(500)
+      .json({ error: 'Internal Server Error', details: error.message })
+  }
+}
+
+const deleteResident = async (req, res) => {
+  const t = await sequelize.transaction()
+
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    const { id } = req.params
+
+    // Find the resident first to verify existence
+    const resident = await Resident.findOne({
+      where: { residentId: id },
+      transaction: t
     })
 
-    if (user) {
-      return res
-        .status(400)
-        .json({ message: 'Username or ID card already exists' })
+    if (!resident) {
+      await t.rollback()
+      return res.status(400).json({ message: 'Resident not found' })
     }
+
+    // 1. Delete all chat associations
+    await sequelize.query('DELETE FROM "ChatResident" WHERE "residentId" = ?', {
+      replacements: [id],
+      type: sequelize.QueryTypes.DELETE,
+      transaction: t
+    })
+
+    // 2. Delete all notification associations
+    await sequelize.query(
+      'DELETE FROM "ResidentNotifications" WHERE "residentId" = ?',
+      {
+        replacements: [id],
+        type: sequelize.QueryTypes.DELETE,
+        transaction: t
+      }
+    )
+
+    // 3. Delete all apartment associations
+    await sequelize.query(
+      'DELETE FROM "ResidentApartments" WHERE "residentId" = ?',
+      {
+        replacements: [id],
+        type: sequelize.QueryTypes.DELETE,
+        transaction: t
+      }
+    )
+
+    await sequelize.query(
+      'DELETE FROM "ServiceBookings" WHERE "residentId" = ?',
+      {
+        replacements: [id],
+        type: sequelize.QueryTypes.DELETE,
+        transaction: t
+      }
+    )
+
+    await sequelize.query('DELETE FROM "Bills" WHERE "residentId" = ?', {
+      replacements: [id],
+      type: sequelize.QueryTypes.DELETE,
+      transaction: t
+    })
+
+    // 4. Delete the resident
+    await resident.destroy({ transaction: t })
+
+    await t.commit()
+    res.status(200).json({ message: 'Resident deleted successfully' })
+  } catch (error) {
+    await t.rollback()
+    console.error('Error in deleteResident:', error.message, error.stack)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+// delete resident by idcard
+const deleteResidentByIdcard = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    const { idcard } = req.params
 
     const resident = await Resident.findOne({
       where: { idcard }
     })
 
-    if (resident) {
-      return res
-        .status(400)
-        .json({ message: 'Username or ID card already exists' })
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
     }
 
-    const am = await Apartment.findOne({
-      where: { aparmentId: apartment }
-    })
+    await resident.destroy()
 
-    if (!am) {
-      return res.status(400).json({ message: 'Apartment not found' })
-    }
-
-    const newUser = {
-      fullname,
-      username,
-      roleId: role.roleId
-    }
-
-    const u = await User.create(newUser)
-
-    await Resident.create({ userId: u.userId, idcard })
-
-    res.status(201).json({ message: 'Resident created successfully' })
+    res.status(200).json({ message: 'Resident deleted' })
   } catch (error) {
     console.log(error)
-    res.status(500).json({ error: error.message })
+    res.status(500).json({ message: 'Internal server error' })
   }
 }
 
@@ -154,5 +303,7 @@ module.exports = {
   getAllResidents,
   getResidentById,
   unActiveResident,
-  registerResident
+  registerResident,
+  deleteResident,
+  deleteResidentByIdcard
 }

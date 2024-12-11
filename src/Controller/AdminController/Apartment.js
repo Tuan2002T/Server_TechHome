@@ -1,8 +1,10 @@
 const {
-  Apartment,
+  Building,
   Floor,
+  Apartment,
   Resident,
-  User
+  User,
+  ResidentApartment
 } = require('../../Model/ModelDefinition')
 
 const getAllApartments = async (req, res) => {
@@ -11,13 +13,60 @@ const getAllApartments = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
-    const apartments = await Apartment.findAll()
-    console.log('apartments')
+    // Get all apartments with related data
+    const apartments = await Apartment.findAll({
+      include: [
+        {
+          model: Floor,
+          include: [
+            {
+              model: Building,
+              attributes: ['buildingName']
+            }
+          ],
+          attributes: ['floorNumber']
+        },
+        {
+          model: Resident,
+          through: {
+            attributes: [] // Exclude junction table attributes
+          },
+          include: [
+            {
+              model: User,
+              attributes: ['fullname']
+            }
+          ],
+          attributes: ['residentId']
+        }
+      ],
+      order: [['apartmentId', 'ASC']]
+    })
 
-    res.status(200).json({ data: apartments })
+    // Transform the data to include only what we need
+    const formattedApartments = apartments.map((apartment) => {
+      return {
+        apartmentId: apartment.apartmentId,
+        apartmentNumber: apartment.apartmentNumber,
+        apartmentType: apartment.apartmentType,
+        buildingName: apartment.Floor?.Building?.buildingName || 'N/A',
+        floorNumber: apartment.Floor?.floorNumber || 'N/A',
+        totalResidents: apartment.Residents?.length || 0,
+        residents:
+          apartment.Residents?.map((resident) => ({
+            residentId: resident.residentId,
+            fullname: resident.User?.fullname || 'N/A'
+          })) || []
+      }
+    })
+
+    res.status(200).json({
+      status: true,
+      data: formattedApartments
+    })
   } catch (error) {
     console.log(error)
-    res.status(500).json({ message: 'Internal server error1' })
+    res.status(500).json({ message: 'Internal server error' })
   }
 }
 
@@ -33,14 +82,53 @@ const getApartmentById = async (req, res) => {
     }
 
     const apartment = await Apartment.findOne({
-      where: { apartmentId }
+      where: { apartmentId },
+      include: [
+        {
+          model: Floor,
+          include: [
+            {
+              model: Building,
+              attributes: ['buildingName']
+            }
+          ],
+          attributes: ['floorNumber']
+        },
+        {
+          model: Resident,
+          through: {
+            attributes: [] // Exclude junction table attributes
+          },
+          include: [
+            {
+              model: User,
+              attributes: ['fullname']
+            }
+          ],
+          attributes: ['residentId']
+        }
+      ]
     })
 
     if (!apartment) {
       return res.status(400).json({ message: 'Apartment not found' })
     }
 
-    res.status(200).json(apartment)
+    const formattedApartment = {
+      apartmentId: apartment.apartmentId,
+      apartmentNumber: apartment.apartmentNumber,
+      apartmentType: apartment.apartmentType,
+      buildingName: apartment.Floor?.Building?.buildingName || 'N/A',
+      floorNumber: apartment.Floor?.floorNumber || 'N/A',
+      totalResidents: apartment.Residents?.length || 0,
+      residents:
+        apartment.Residents?.map((resident) => ({
+          residentId: resident.residentId,
+          fullname: resident.User?.fullname || 'N/A'
+        })) || []
+    }
+
+    res.status(200).json({ status: true, data: formattedApartment })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Internal server error2' })
@@ -139,22 +227,30 @@ const deleteApartment = async (req, res) => {
 
     const apartmentId = req.params.id
 
+    // Fetch apartment along with related ResidentApartment associations
     const apartment = await Apartment.findOne({
-      where: { apartmentId }
+      where: { apartmentId },
+      include: [{ model: Resident, through: { model: ResidentApartment } }] // Include related residents through ResidentApartment
     })
 
     if (!apartment) {
       return res.status(400).json({ message: 'Apartment not found' })
     }
 
+    // Remove associated residents explicitly from the ResidentApartment join table
+    await ResidentApartment.destroy({
+      where: { apartmentId }
+    })
+
+    // Now delete the apartment
     await Apartment.destroy({
       where: { apartmentId }
     })
 
-    res.status(200).json({ message: 'Apartment deleted' })
+    res.status(200).json({ message: 'Xóa căn hộ thành công' }) // "Apartment deleted successfully" in Vietnamese
   } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Internal server error' })
+    console.error(error)
+    res.status(500).json({ message: error.message })
   }
 }
 
@@ -230,37 +326,87 @@ const getResidentByApartmentId = async (req, res) => {
   }
 }
 
-const addApartmentandResidentToApartmentDetail = async (req, res) => {
+const addResidentsToApartment = async (req, res) => {
   try {
-    const { apartmentId, residentId } = req.body
+    const { id } = req.params
+    const { residentId } = req.body
 
-    if (isNaN(apartmentId) || isNaN(residentId)) {
-      return res
-        .status(400)
-        .json({ message: 'Invalid apartmentId or residentId' })
+    // Validate apartmentId
+    if (isNaN(id)) {
+      return res.status(400).json({ message: 'Invalid apartmentId' })
     }
 
+    // Validate residentId as an array of numbers
+    if (!Array.isArray(residentId) || !residentId.every((id) => !isNaN(id))) {
+      return res.status(400).json({ message: 'Invalid residentId format' })
+    }
+
+    // Find the apartment
     const apartment = await Apartment.findOne({
-      where: { apartmentId: apartmentId } // Đảm bảo apartmentId là số
+      where: { apartmentId: id }
     })
 
     if (!apartment) {
       return res.status(400).json({ message: 'Apartment not found' })
     }
 
-    const resident = await Resident.findOne({
-      where: { residentId: residentId } // Đảm bảo residentId là số
+    // Find all residents by their IDs
+    const residents = await Resident.findAll({
+      where: { residentId: residentId }
     })
 
-    if (!resident) {
-      return res.status(400).json({ message: 'Resident not found' })
+    if (residents.length !== residentId.length) {
+      return res.status(400).json({ message: 'Some residents not found' })
     }
 
-    await apartment.addResident(resident) // Thêm cư dân vào căn hộ
+    // Add all residents to the apartment
+    await apartment.addResidents(residents)
 
-    res.status(200).json({ message: 'Resident added to apartment' })
+    res.status(200).json({ message: 'Residents added to apartment' })
   } catch (error) {
-    console.log(error)
+    console.error(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+const removeResidentsFromApartment = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { residentId } = req.body
+
+    // Validate apartmentId
+    if (isNaN(id)) {
+      return res.status(400).json({ message: 'Invalid apartmentId' })
+    }
+
+    // Validate residentId as an array of numbers
+    if (!Array.isArray(residentId) || !residentId.every((id) => !isNaN(id))) {
+      return res.status(400).json({ message: 'Invalid residentId format' })
+    }
+
+    // Find the apartment
+    const apartment = await Apartment.findOne({
+      where: { apartmentId: id }
+    })
+
+    if (!apartment) {
+      return res.status(400).json({ message: 'Apartment not found' })
+    }
+
+    // Find all residents by their IDs
+    const residents = await Resident.findAll({
+      where: { residentId: residentId }
+    })
+
+    if (residents.length !== residentId.length) {
+      return res.status(400).json({ message: 'Some residents not found' })
+    }
+
+    // Remove all residents from the apartment
+    await apartment.removeResidents(residents)
+
+    res.status(200).json({ message: 'Residents removed from apartment' })
+  } catch (error) {
     res.status(500).json({ message: 'Internal server error' })
   }
 }
@@ -272,5 +418,6 @@ module.exports = {
   updateApartment,
   getResidentByApartmentId,
   deleteApartment,
-  addApartmentandResidentToApartmentDetail
+  addResidentsToApartment,
+  removeResidentsFromApartment
 }

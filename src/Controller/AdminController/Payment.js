@@ -36,4 +36,21 @@ const addPayment = async (req, res) => {
   }
 }
 
-module.exports = { getPayments, addPayment }
+const removePayment = async (req, res) => {
+  try {
+    const { paymentId } = req.params
+    const payment = await Payment.findByPk(paymentId)
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found.' })
+    }
+    await payment.destroy()
+    return res.status(200).json({ message: 'Payment deleted successfully.' })
+  } catch (error) {
+    console.log(error)
+    return res
+      .status(500)
+      .json({ message: 'An error occurred while deleting payment.' })
+  }
+}
+
+module.exports = { getPayments, addPayment, removePayment }

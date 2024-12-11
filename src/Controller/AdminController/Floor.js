@@ -91,6 +91,17 @@ const createFloor = async (req, res) => {
         .json({ message: 'Floor name and buildingId is required' })
     }
 
+    // check if floorNumber already exists in the building
+    const floor = await Floor.findOne({
+      where: { floorNumber, buildingId }
+    })
+
+    if (floor) {
+      return res
+        .status(400)
+        .json({ message: 'Floor number already exists in the building' })
+    }
+
     const newFloor = {
       floorNumber,
       buildingId

@@ -83,9 +83,32 @@ const updateFacility = async (req, res) => {
   }
 }
 
+// remove facility
+const removeFacility = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    const { id } = req.params
+    const facilityId = id
+    const facility = await Facility.findOne({ where: { facilityId } })
+    if (!facility) {
+      return res.status(404).json({ message: 'Facility not found' })
+    }
+
+    await Facility.destroy({ where: { facilityId } })
+    res.status(200).json({ message: 'Facility removed' })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 module.exports = {
   getAllFacilities,
   getFacilityById,
   createFacility,
-  updateFacility
+  updateFacility,
+  removeFacility
 }

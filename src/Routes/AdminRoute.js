@@ -7,7 +7,8 @@ const {
   authentication,
   getCurrentAdmin,
   getAdminById,
-  updateAdmin
+  updateAdmin,
+  changePassword
 } = require('../Controller/AdminController')
 const {
   getAllBuildings,
@@ -46,27 +47,42 @@ const {
   updateApartment,
   deleteApartment,
   getResidentByApartmentId,
-  addApartmentandResidentToApartmentDetail
+  addResidentsToApartment,
+  removeResidentsFromApartment
 } = require('../Controller/AdminController/Apartment')
 const {
   getAllResidents,
   getResidentById,
   unActiveResident,
-  registerResident
+  registerResident,
+  deleteResident,
+  deleteResidentByIdcard
 } = require('../Controller/AdminController/Resident')
-const { getAllFacilities } = require('../Controller/AdminController/Facilities')
-const { getVehicles } = require('../Controller/AdminController/Vehicle')
 const {
-  getNotifications
+  getAllFacilities,
+  getFacilityById,
+  createFacility,
+  updateFacility,
+  removeFacility
+} = require('../Controller/AdminController/Facilities')
+const {
+  getVehicles,
+  deleteVehicle
+} = require('../Controller/AdminController/Vehicle')
+const {
+  getNotifications,
+  deleteNotification
 } = require('../Controller/AdminController/Notification')
 const {
   getComplaints,
-  addComplaint
+  addComplaint,
+  removeComplaint
 } = require('../Controller/AdminController/Complaint')
 const { getBills } = require('../Controller/AdminController/Bill')
 const {
   getPayments,
-  addPayment
+  addPayment,
+  removePayment,
 } = require('../Controller/AdminController/Payment')
 
 const { upload } = require('../AWS/s3')
@@ -95,11 +111,13 @@ router.get('/current', auth, getCurrentAdmin)
 router.get('/:id', auth, getAdminById)
 router.put('/update', auth, upload.single('file'), updateAdmin)
 
+router.put('/change-password', auth, changePassword)
+
 // manage building
 router.get('/building/getAll', auth, getAllBuildings)
 router.get('/building/:id', auth, getBuildingById)
 router.post('/building', auth, createBuilding)
- router.post('/building/new', auth, newBuilding) // create a new building with default values for floors, apartments, and residents
+router.post('/building/new', auth, newBuilding) // create a new building with default values for floors, apartments, and residents
 router.put('/building/:id', auth, updateBuilding)
 router.delete('/building/:id', auth, deleteBuilding)
 
@@ -132,30 +150,36 @@ router.post('/apartment', auth, createApartment)
 router.put('/apartment/:id', auth, updateApartment)
 router.delete('/apartment/:id', auth, deleteApartment)
 router.get('/apartment/resident/:id', auth, getResidentByApartmentId)
-router.put(
-  '/apartment/resident/addApartmentandResidentToApartmentDetail',
-  auth,
-  addApartmentandResidentToApartmentDetail
-)
+router.put('/apartment/join/:id', auth, addResidentsToApartment)
+router.put('/apartment/leave/:id', auth, removeResidentsFromApartment)
 
 // manage resident
 router.get('/resident/getAll', auth, getAllResidents)
 router.get('/resident/:id', auth, getResidentById)
 router.put('/resident/:id', auth, unActiveResident)
 router.post('/registerResident', auth, registerResident)
+router.delete('/resident/:id', auth, deleteResident)
+router.delete('/resident/idcard/:idcard', auth, deleteResidentByIdcard)
 
 // manage facilities
 router.get('/facilities/getAll', auth, getAllFacilities)
+router.get('/facilities/:id', auth, getFacilityById)
+router.post('/facilities', auth, createFacility)
+router.put('/facilities/:id', auth, updateFacility)
+router.delete('/facilities/:id', auth, removeFacility)
 
 // manage vehicles
 router.get('/vehicles/getAll', auth, getVehicles)
+router.delete('/vehicles/:id', auth, deleteVehicle)
 
 // manage notifications
 router.get('/notifications/getAll', auth, getNotifications)
+router.delete('/notifications/:id', auth, deleteNotification)
 
 // manage complaints
 router.get('/complaints/getAll', auth, getComplaints)
 router.post('/complaints', auth, addComplaint)
+router.delete('/complaints/:id', auth, removeComplaint)
 
 // manage bills
 router.get('/bills/getAll', auth, getBills)
@@ -163,5 +187,6 @@ router.get('/bills/getAll', auth, getBills)
 // manage payments
 router.get('/payments/getAll', auth, getPayments)
 router.post('/payments', auth, addPayment)
+router.delete('/payments/:paymentId', auth, removePayment)
 
 module.exports = router

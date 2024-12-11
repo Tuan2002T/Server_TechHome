@@ -47,4 +47,26 @@ const addComplaint = async (req, res) => {
   }
 }
 
-module.exports = { getComplaints, addComplaint }
+// remove complaint
+const removeComplaint = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+
+    const { id } = req.params
+    const complaintId = id
+    const complaint = await Complaint.findOne({ where: { complaintId } })
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' })
+    }
+
+    await complaint.destroy()
+    res.status(200).json({ message: 'Complaint removed' })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = { getComplaints, addComplaint, removeComplaint }
