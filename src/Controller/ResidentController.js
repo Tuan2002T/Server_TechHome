@@ -308,7 +308,6 @@ const generateOTP = () => {
 
 const sentOTPHandler = async (req, res) => {
   const { to } = req.body
-
   if (!to) {
     return res.status(400).json({
       success: false,
@@ -376,7 +375,8 @@ const sentOTPHandler = async (req, res) => {
   const otp = generateOTP()
 
   try {
-    const response = await sendOTP(to, otp, validatedType, id)
+    const p = to.replace('0', '+84')
+    const response = await sendOTP(p, otp, validatedType, id)
     return res.status(200).json({ success: true, response })
   } catch (error) {
     return res.status(400).json({ success: false, error: error.message })

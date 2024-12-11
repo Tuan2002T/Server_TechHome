@@ -31,7 +31,10 @@ const {
   getAllComplaints,
   sendComplaint,
   getAllBuidlingsAndFloorsAndApartments,
-  deleteComplaint
+  deleteComplaint,
+  getBuildings,
+  getFloorsByBuildingId,
+  getApartmentsByFloorId
 } = require('../Controller/ResidentController/Complaints')
 const {
   getAllBuildingServices
@@ -46,6 +49,7 @@ const {
   cancelledPayment
 } = require('../Controller/ResidentController/Payment')
 const { refreshToken } = require('../Controller/RefreshToken')
+const { getAllEvents } = require('../Controller/ResidentController/Events')
 
 router.post('/login', loginResident)
 router.post('/refreshToken', refreshToken)
@@ -80,6 +84,9 @@ router.get(
   getAllBuidlingsAndFloorsAndApartments
 )
 router.delete('/deleteComplaint/:id', auth, deleteComplaint)
+router.get('/getBuildings', auth, getBuildings)
+router.get('/getFloorsByBuildingId/:id', auth, getFloorsByBuildingId)
+router.get('/getApartmentsByFloorId/:id', auth, getApartmentsByFloorId)
 
 router.get('/getAllBills', auth, getAllBills)
 router.post('/createBill', auth, createBill)
@@ -87,5 +94,6 @@ router.post('/cancelledPayment', auth, cancelledPayment)
 
 router.post('/createPayment', auth, createPayment)
 router.post('/paymentWebhook', paymentWebhook)
+router.get('/getAllEvents/:buildingId', auth, getAllEvents)
 
 module.exports = router
