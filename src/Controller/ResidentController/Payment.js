@@ -211,14 +211,13 @@ const paymentWebhook = async (req, res) => {
     }
 
     if (desc === 'success') {
-      payment.paymentStatus = 'success'
+      payment.paymentStatus = 'Success'
       await payment.save({ transaction })
 
-      const billPayments = await Payment.findAll({
-        where: { paymentId: payment.paymentId },
+      const billPayments = await Bill.findAll({
         include: {
-          model: Bill,
-          as: 'bills',
+          model: Payment,
+          where: { paymentId: payment.paymentId },
           through: {
             attributes: []
           }
@@ -226,6 +225,7 @@ const paymentWebhook = async (req, res) => {
         transaction
       })
 
+      // Cập nhật trạng thái của các Bill
       await Promise.all(
         billPayments.map(async (bill) => {
           bill.billStatus = 'PAID'
@@ -234,40 +234,84 @@ const paymentWebhook = async (req, res) => {
       )
 
       await transaction.commit()
-      const bill = await Bill.findOne({
-        include: {
-          model: Payment,
-          as: 'payments',
-          through: {
-            attributes: []
-          }
-        },
-        where: { paymentId: payment.paymentId }
-      })
 
       const resident = await Resident.findOne({
-        where: { residentId: bill[0].residentId }
+        where: { residentId: billPayments[0].residentId }
       })
-      notificationPush(
-        resident.tokenFCM,
-        'Payment successful',
-        `Payment for bill ${bill[0].billId} successful`
-      )
+
+      if (resident && resident.tokenFCM !== null && resident.tokenFCM !== '') {
+        notificationPush(
+          resident.tokenFCM,
+          'Payment successful',
+          `Payment for bill ${billPayments[0].billId} successful`
+        )
+      }
+
       console.log('Payment and bills updated successfully.')
-      res.status(200).json({ message: 'Payment successful' })
+      return res.status(200).json({ message: 'Payment successful' })
     } else {
       payment.paymentStatus = 'Failed'
       await payment.save({ transaction })
-
       await transaction.commit()
+
       console.log('Payment status updated to Failed.')
-      res.status(200).json(req.body)
+      return res.status(200).json({ message: 'Payment failed' })
     }
   } catch (error) {
     await transaction.rollback()
     console.error('Error processing webhook:', error)
-    res.status(500).json({ message: 'Internal Server Error' })
+    return res.status(500).json({ message: 'Internal Server Error' })
   }
 }
 
-module.exports = { createPayment, paymentWebhook, cancelledPayment }
+const getBills = async (req, res) => {
+  try {
+    const residentId = req.resident.residentId
+
+    const currentDate = new Date()
+    const startOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1
+    )
+
+    const bills = await Bill.findAll({
+      where: {
+        residentId: residentId,
+        billDate: {
+          [Op.gte]: startOfMonth,
+          [Op.lte]: currentDate
+        }
+      }
+    })
+
+    console.log(bills)
+
+    const totalAmount = bills.reduce(
+      (sum, bill) => sum + parseFloat(bill.billAmount),
+      0
+    )
+
+    const serviceSummary = bills.reduce((acc, bill) => {
+      if (acc[bill.billName]) {
+        acc[bill.billName] += parseFloat(bill.billAmount)
+      } else {
+        acc[bill.billName] = parseFloat(bill.billAmount)
+      }
+      return acc
+    }, {})
+
+    console.log(totalAmount)
+
+    const servicePercentage = Object.keys(serviceSummary).map((billName) => ({
+      billName,
+      percentage: ((serviceSummary[billName] / totalAmount) * 100).toFixed(2)
+    }))
+
+    res.status(200).json({ total: servicePercentage })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+module.exports = { createPayment, paymentWebhook, cancelledPayment, getBills }

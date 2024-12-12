@@ -83,6 +83,11 @@ const createSocket = (server) => {
           io.to(user.socketId).emit('receiveMessage', message)
         }
       })
+      usersOnline.forEach((user) => {
+        if (user.socketId !== socket.id) {
+          io.to(user.socketId).emit('notification', message)
+        }
+      })
     })
 
     socket.on('deleteMessage', (chatId, messageId) => {
@@ -118,4 +123,8 @@ const createSocket = (server) => {
   })
 }
 
-module.exports = createSocket
+module.exports = {
+  createSocket,
+  io,
+  usersOnline
+}
