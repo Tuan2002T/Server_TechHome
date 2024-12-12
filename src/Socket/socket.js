@@ -1,8 +1,10 @@
 const { Server } = require('socket.io')
+const EventEmitter = require('events')
 
 let io
 const usersOnline = []
 let chatRooms = []
+let eventEmitter = new EventEmitter()
 
 const createSocket = (server) => {
   io = new Server(server, {
@@ -103,6 +105,24 @@ const createSocket = (server) => {
       })
     })
 
+    socket.on('sendNotification', (notification, userIds) => {
+      userIds.forEach((userId) => {
+        const user = usersOnline.find((user) => user.userId === userId)
+        if (user) {
+          io.to(user.socketId).emit('notification', notification)
+        }
+      })
+    })
+
+    eventEmitter.on('sendNotification', (userId, message) => {
+      console.log('Sending notification via eventEmitter')
+
+      const user = usersOnline.find((user) => user.userId === userId)
+      if (user && io) {
+        io.to(user.socketId).emit('notificationPayment', message)
+      }
+    })
+
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id)
 
@@ -127,5 +147,6 @@ const createSocket = (server) => {
 module.exports = {
   createSocket,
   io,
-  usersOnline
+  usersOnline,
+  eventEmitter
 }

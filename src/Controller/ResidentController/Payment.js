@@ -7,6 +7,7 @@ const {
 } = require('../../Model/ModelDefinition')
 const payos = require('../../Payment/PayOs')
 const { notificationPush } = require('../../FireBase/NotificationPush')
+const { io, usersOnline, eventEmitter } = require('../../Socket/socket')
 
 // const createPayment = async (req, res) => {
 //   try {
@@ -239,14 +240,17 @@ const paymentWebhook = async (req, res) => {
         where: { residentId: billPayments[0].residentId }
       })
 
-      if (resident && resident.tokenFCM !== null && resident.tokenFCM !== '') {
-        notificationPush(
-          resident.tokenFCM,
-          'Payment successful',
-          `Payment for bill ${billPayments[0].billId} successful`
-        )
+      // if (resident && resident.tokenFCM !== null && resident.tokenFCM !== '') {
+      //   notificationPush(
+      //     resident.tokenFCM,
+      //     'Payment successful',
+      //     `Payment for bill ${billPayments[0].billId} successful`
+      //   )
+      // }
+      const user = usersOnline.find((user) => user.userId === 3)
+      if (user) {
+        eventEmitter.emit('sendNotification', 3, 'Hello User 3')
       }
-
       console.log('Payment and bills updated successfully.')
       return res.status(200).json({ message: 'Payment successful' })
     } else {
@@ -314,4 +318,28 @@ const getBills = async (req, res) => {
   }
 }
 
-module.exports = { createPayment, paymentWebhook, cancelledPayment, getBills }
+const testSocket = async (req, res) => {
+  try {
+    console.log('đây')
+    console.log(usersOnline)
+
+    const user = usersOnline.find((user) => user.userId === 3)
+    console.log(user)
+    console.log(eventEmitter)
+
+    if (user) {
+      eventEmitter.emit('sendNotification', 3, 'Hello User 3')
+    }
+    res.status(200).json({ message: 'Notification sent' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+module.exports = {
+  createPayment,
+  paymentWebhook,
+  cancelledPayment,
+  getBills,
+  testSocket
+}
