@@ -102,6 +102,14 @@ const createSocket = (server) => {
       })
     })
 
+    socket.on('sendNotification', (notification, userIds) => {
+      userIds.forEach((userId) => {
+        const user = usersOnline.find((user) => user.userId === userId)
+        if (user) {
+          io.to(user.socketId).emit('notification', notification)
+        }
+      })
+    })
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id)
 

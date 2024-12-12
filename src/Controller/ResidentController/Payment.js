@@ -7,6 +7,7 @@ const {
 } = require('../../Model/ModelDefinition')
 const payos = require('../../Payment/PayOs')
 const { notificationPush } = require('../../FireBase/NotificationPush')
+const { io } = require('../../Socket/socket')
 
 // const createPayment = async (req, res) => {
 //   try {
@@ -239,14 +240,13 @@ const paymentWebhook = async (req, res) => {
         where: { residentId: billPayments[0].residentId }
       })
 
-      if (resident && resident.tokenFCM !== null && resident.tokenFCM !== '') {
-        notificationPush(
-          resident.tokenFCM,
-          'Payment successful',
-          `Payment for bill ${billPayments[0].billId} successful`
-        )
-      }
-
+      // if (resident && resident.tokenFCM !== null && resident.tokenFCM !== '') {
+      //   notificationPush(
+      //     resident.tokenFCM,
+      //     'Payment successful',
+      //     `Payment for bill ${billPayments[0].billId} successful`
+      //   )
+      // }
       console.log('Payment and bills updated successfully.')
       return res.status(200).json({ message: 'Payment successful' })
     } else {

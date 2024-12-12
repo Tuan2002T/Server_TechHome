@@ -11,7 +11,8 @@ app.use(bodyParser.json())
 const adminRoute = require('./src/Routes/AdminRoute')
 const residentRoute = require('./src/Routes/ResidentRoute')
 const chatRoute = require('./src/Routes/ChatRoute')
-const { createSocket } = require('./src/Socket/socket')
+const { createSocket, io } = require('./src/Socket/socket')
+// const createSocket = require('./src/Socket/socket')
 
 app.use(cors())
 app.use(express.json())
@@ -19,7 +20,7 @@ app.use(express.json())
 const server = app.listen(3000, () => {
   console.log('Server is running on port 3000')
   try {
-    createSocket(server)
+    io = createSocket(server)
     console.log('Socket is running')
   } catch (error) {
     console.error('Failed to start socket:', error)
