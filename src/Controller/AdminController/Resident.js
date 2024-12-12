@@ -237,7 +237,7 @@ const deleteResident = async (req, res) => {
       }
     )
 
-    // 3. Delete all apartment associations
+    // 3. Delete all apartment associations with sequelize
     await sequelize.query(
       'DELETE FROM "ResidentApartments" WHERE "residentId" = ?',
       {
@@ -306,11 +306,34 @@ const deleteResidentByIdcard = async (req, res) => {
   }
 }
 
+// update resident
+const updateResident = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+    const { id } = req.params
+    const { fullname, idcard, phonenumber, email } = req.body
+    const resident = await Resident.findByPk(id)
+    if (!resident) {
+      return res.status(400).json({ message: 'Resident not found' })
+    }
+    await resident.update({ idcard, phonenumber })
+    const user = await User.findByPk(resident.userId)
+    await user.update({ fullname, email })
+    res.status(200).json({ message: 'Resident updated' })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 module.exports = {
   getAllResidents,
   getResidentById,
   unActiveResident,
   registerResident,
   deleteResident,
-  deleteResidentByIdcard
+  deleteResidentByIdcard,
+  updateResident
 }

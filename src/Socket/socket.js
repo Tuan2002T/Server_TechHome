@@ -91,6 +91,7 @@ const createSocket = (server) => {
     })
 
     socket.on('deleteMessage', (chatId, messageId) => {
+      console.log('Delete message thành công?:', messageId)
       const chatRoom = chatRooms.find((room) => room.chatId === chatId)
       if (!chatRoom) {
         console.error(`Chat room not found for chatId: ${message.chatId}`)

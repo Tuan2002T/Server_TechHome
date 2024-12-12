@@ -134,9 +134,9 @@ const deleteMessage = async (req, res) => {
       return res.status(404).json('Message not found')
     }
 
-    if (message.senderId !== req.resident.residentId) {
-      return res.status(403).json('You are not allowed to delete this message')
-    }
+    // if (message.senderId !== req.resident.residentId) {
+    //   return res.status(403).json('You are not allowed to delete this message')
+    // }
 
     await message.setFiles([])
 

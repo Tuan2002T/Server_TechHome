@@ -56,7 +56,8 @@ const {
   unActiveResident,
   registerResident,
   deleteResident,
-  deleteResidentByIdcard
+  deleteResidentByIdcard,
+  updateResident
 } = require('../Controller/AdminController/Resident')
 const {
   getAllFacilities,
@@ -67,22 +68,28 @@ const {
 } = require('../Controller/AdminController/Facilities')
 const {
   getVehicles,
+  addVehicle,
+  updateVehicle,
   deleteVehicle
 } = require('../Controller/AdminController/Vehicle')
 const {
   getNotifications,
+  addNotification,
+  updateNotification,
   deleteNotification
 } = require('../Controller/AdminController/Notification')
 const {
   getComplaints,
   addComplaint,
+  updateComplaint,
+  updateComplaintStatus,
   removeComplaint
 } = require('../Controller/AdminController/Complaint')
 const { getBills } = require('../Controller/AdminController/Bill')
 const {
   getPayments,
   addPayment,
-  removePayment,
+  removePayment
 } = require('../Controller/AdminController/Payment')
 
 const { upload } = require('../AWS/s3')
@@ -160,6 +167,7 @@ router.put('/resident/:id', auth, unActiveResident)
 router.post('/registerResident', auth, registerResident)
 router.delete('/resident/:id', auth, deleteResident)
 router.delete('/resident/idcard/:idcard', auth, deleteResidentByIdcard)
+router.put('/resident/update/:id', auth, updateResident)
 
 // manage facilities
 router.get('/facilities/getAll', auth, getAllFacilities)
@@ -170,15 +178,21 @@ router.delete('/facilities/:id', auth, removeFacility)
 
 // manage vehicles
 router.get('/vehicles/getAll', auth, getVehicles)
+router.post('/vehicles', auth, addVehicle)
+router.put('/vehicles/:id', auth, updateVehicle)
 router.delete('/vehicles/:id', auth, deleteVehicle)
 
 // manage notifications
 router.get('/notifications/getAll', auth, getNotifications)
+router.post('/notifications', auth, addNotification)
+router.put('/notifications/:id', auth, updateNotification)
 router.delete('/notifications/:id', auth, deleteNotification)
 
 // manage complaints
 router.get('/complaints/getAll', auth, getComplaints)
 router.post('/complaints', auth, addComplaint)
+router.put('/complaints/:id', auth, updateComplaint)
+router.put('/complaints/status/:id', auth, updateComplaintStatus)
 router.delete('/complaints/:id', auth, removeComplaint)
 
 // manage bills

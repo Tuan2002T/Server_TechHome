@@ -69,4 +69,68 @@ const removeComplaint = async (req, res) => {
   }
 }
 
-module.exports = { getComplaints, addComplaint, removeComplaint }
+// update complaint
+
+const updateComplaint = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+    const { id } = req.params
+    const complaintId = id
+    const complaint = await Complaint.findOne({ where: { complaintId } })
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' })
+    }
+    const {
+      complaintTitle,
+      complaintDescription,
+      buildingId,
+      floorId,
+      apartmentId,
+      residentId
+    } = req.body
+    await complaint.update({
+      complaintTitle,
+      complaintDescription,
+      buildingId,
+      floorId,
+      apartmentId,
+      residentId
+    })
+    res.status(200).json({ data: complaint })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+// update complaint status 'Pending', 'In Progress', 'Resolved', 'Rejected'
+
+const updateComplaintStatus = async (req, res) => {
+  try {
+    if (req.user.roleId !== 1) {
+      return res.status(403).json({ message: 'Access denied. Admins only.' })
+    }
+    const { id } = req.params
+    const complaintId = id
+    const complaint = await Complaint.findOne({ where: { complaintId } })
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' })
+    }
+    const { complaintStatus } = req.body
+    await complaint.update({ complaintStatus })
+    res.status(200).json({ data: complaint })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
+module.exports = {
+  getComplaints,
+  addComplaint,
+  updateComplaint,
+  removeComplaint,
+  updateComplaintStatus
+}

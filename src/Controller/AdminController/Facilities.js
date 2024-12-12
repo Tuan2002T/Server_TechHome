@@ -30,9 +30,20 @@ const getFacilityById = async (req, res) => {
 
 const createFacility = async (req, res) => {
   try {
-    const { facilityName, facilityPrice, buildingId } = req.body
+    const {
+      facilityName,
+      facilityPrice,
+      buildingId,
+      facilityLocation,
+      facilityDescription
+    } = req.body
 
-    if (!facilityName || !facilityPrice || !buildingId) {
+    if (
+      !facilityName ||
+      !buildingId ||
+      !facilityLocation ||
+      !facilityDescription
+    ) {
       return res
         .status(400)
         .json({ message: 'Facility name, price and buildingId is required' })
@@ -41,7 +52,9 @@ const createFacility = async (req, res) => {
     const newFacility = {
       facilityName,
       facilityPrice,
-      buildingId
+      buildingId,
+      facilityLocation,
+      facilityDescription
     }
 
     await Facility.create(newFacility)
@@ -55,7 +68,13 @@ const createFacility = async (req, res) => {
 const updateFacility = async (req, res) => {
   try {
     const facilityId = req.params.id
-    const { facilityName, facilityPrice, buildingId } = req.body
+    const {
+      facilityName,
+      facilityPrice,
+      facilityDescription,
+      facilityLocation,
+      buildingId
+    } = req.body
 
     const facility = await Facility.findOne({
       where: { facilityId }
@@ -69,7 +88,9 @@ const updateFacility = async (req, res) => {
       {
         facilityName,
         facilityPrice,
-        buildingId
+        buildingId,
+        facilityDescription,
+        facilityLocation
       },
       {
         where: { facilityId }
