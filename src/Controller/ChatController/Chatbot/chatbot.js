@@ -99,7 +99,10 @@ const messageClassification = {
     'phí giao dịch',
     'phí đăng ký',
     'tiền nhà',
-    'tiền'
+    'tiền',
+    'chi tiêu',
+    'thanh toán online',
+    'thanh toán hóa đơn'
   ],
   vehicles: [
     'đỗ xe',
