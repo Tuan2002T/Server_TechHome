@@ -31,7 +31,7 @@ const getAIResponse = async (
 
       Dữ liệu liên quan mà hệ thống tìm thấy:
       ${JSON.stringify(details, null, 2)}
-      Nếu câu hỏi về "cách đặt dịch vụ, hướng dẫn đặt dịch vụ" thì hướng dẫn như sau: Vào mục "Dịch vụ" -> Chọn dịch vụ cần đặt -> Ở bước này có thể đặt qua app hoặc dựa theo thông tin liên lạc để đặt dịch vụ -> nếu đặt qua app thì sẽ có QR code xuất hiện có thể thanh toán ngay hoặc quay về để thanh toán sau ở mục Thanh toán -> Nếu muốn huỷ dịch vụ vui lòng liên hệ với admin để huỷ. -> Còn không thì bỏ qua bước này.
+
       Dựa trên các thông tin trên, hãy đưa ra câu trả lời chi tiết và thân thiện, giải thích rõ cho cư dân về câu hỏi của họ.
     `
 

@@ -12,7 +12,6 @@ const adminRoute = require('./src/Routes/AdminRoute')
 const residentRoute = require('./src/Routes/ResidentRoute')
 const chatRoute = require('./src/Routes/ChatRoute')
 const { createSocket } = require('./src/Socket/socket')
-// const createSocket = require('./src/Socket/socket')
 
 app.use(cors())
 app.use(express.json())

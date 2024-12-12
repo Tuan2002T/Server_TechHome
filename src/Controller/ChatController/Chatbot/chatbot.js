@@ -1,5 +1,4 @@
 const removeAccents = require('remove-accents')
-const natural = require('natural')
 const getResidentApartmentInfo = require('./data')
 const {
   Facility,
@@ -11,7 +10,6 @@ const {
   Vehicle
 } = require('../../../Model/ModelDefinition')
 
-const classifier = new natural.BayesClassifier()
 const messageClassification = {
   facilities: [
     'thang máy',
@@ -104,11 +102,7 @@ const messageClassification = {
     'tiền',
     'chi tiêu',
     'thanh toán online',
-    'thanh toán hóa đơn',
-    'cách thanh toán hóa đơn?',
-    'làm sao để thanh toán tiền điện?',
-    'hóa đơn tháng này bao nhiêu tiền?',
-    'có thể thanh toán qua internet không?'
+    'thanh toán hóa đơn'
   ],
   vehicles: [
     'đỗ xe',
@@ -134,10 +128,7 @@ const messageClassification = {
     'xe buýt',
     'tuyến xe',
     'số xe',
-    'thay lốp xe',
-    'làm sao đăng ký xe?',
-    'có thể đậu xe ở đâu?',
-    'thẻ xe làm như thế nào?'
+    'thay lốp xe'
   ],
   complaint: [
     'phàn nàn',
@@ -152,102 +143,100 @@ const messageClassification = {
     'sự phản đối',
     'điều không hài lòng',
     'phản hồi',
-    'phản ánh',
-    'tôi muốn phàn nàn về...',
-    'có thể gửi phản ánh như thế nào?',
-    'phàn nàn về bãi đỗ xe'
+    'phản ánh'
   ]
-}
-
-function trainClassifier() {
-  for (const [category, keywords] of Object.entries(messageClassification)) {
-    keywords.forEach((keyword) => {
-      const text = `${category}: ${keyword}`
-      classifier.addDocument(removeAccents(text.toLowerCase()), category)
-    })
-  }
-
-  classifier.train()
 }
 
 async function classifyMessage(message, residentId) {
   const messageNoAccents = removeAccents(message.toLowerCase())
 
-  let classification = classifier.classify(messageNoAccents)
-
-  if (!classification) {
-    classification = 'unknown'
-    classifier.addDocument(messageNoAccents, classification)
-    classifier.train()
+  const classificationResult = {
+    facilities: [],
+    services: [],
+    events: [],
+    bills: [],
+    vehicles: [],
+    complaint: []
   }
 
   const data = await getResidentApartmentInfo(residentId)
   const details = {}
 
-  if (classification === 'facilities') {
-    const facilities = await Facility.findAll({
-      include: [
-        {
-          model: Building,
-          as: 'Buildings',
-          where: { buildingId: data.building.id }
+  for (const [category, keywords] of Object.entries(messageClassification)) {
+    for (const word of keywords) {
+      const wordNoAccents = removeAccents(word.toLowerCase())
+
+      const regex = new RegExp(`\\b${wordNoAccents}\\b`, 'i')
+
+      if (regex.test(messageNoAccents)) {
+        classificationResult[category].push(word)
+
+        if (!details[category]) details[category] = []
+
+        if (category === 'facilities') {
+          const facilities = await Facility.findAll({
+            include: [
+              {
+                model: Building,
+                as: 'Buildings',
+                where: { buildingId: data.building.id }
+              }
+            ]
+          })
+          details[category] = facilities
+        } else if (category === 'services') {
+          const services = await Facility.findAll({
+            include: [
+              {
+                model: Building,
+                as: 'Buildings',
+                where: { buildingId: data.building.id }
+              }
+            ]
+          })
+          details[category] = services
+        } else if (category === 'events') {
+          const events = await Event.findAll({
+            where: { buildingId: data.building.id }
+          })
+          details[category] = events
+        } else if (category === 'bills') {
+          const billsPayment = await Bill.findAll({
+            where: { residentId: residentId },
+            include: [
+              {
+                model: Payment,
+                as: 'Payments'
+              }
+            ]
+          })
+
+          const bills = await Bill.findAll({
+            where: { residentId: residentId }
+          })
+          details['billPayment'] = billsPayment
+          details[category] = bills
+        } else if (category === 'complaint') {
+          const complaints = await Complaint.findAll({
+            where: { residentId: residentId }
+          })
+          details[category] = complaints
+        } else if (category === 'vehicles') {
+          const vehicles = await Vehicle.findAll({
+            where: { residentId: residentId }
+          })
+
+          details[category] = vehicles
         }
-      ]
-    })
-    details[classification] = facilities
-  } else if (classification === 'services') {
-    const services = await Facility.findAll({
-      include: [
-        {
-          model: Building,
-          as: 'Buildings',
-          where: { buildingId: data.building.id }
-        }
-      ]
-    })
-    details[classification] = services
-  } else if (classification === 'events') {
-    const events = await Event.findAll({
-      where: { buildingId: data.building.id }
-    })
-    details[classification] = events
-  } else if (classification === 'bills') {
-    const billsPayment = await Bill.findAll({
-      where: { residentId: residentId },
-      include: [
-        {
-          model: Payment,
-          as: 'Payments'
-        }
-      ]
-    })
-    const bills = await Bill.findAll({
-      where: { residentId: residentId }
-    })
-    details['billPayment'] = billsPayment
-    details[classification] = bills
-  } else if (classification === 'complaint') {
-    const complaints = await Complaint.findAll({
-      where: { residentId: residentId }
-    })
-    details[classification] = complaints
-  } else if (classification === 'vehicles') {
-    const vehicles = await Vehicle.findAll({
-      where: { residentId: residentId }
-    })
-    details[classification] = vehicles
-  } else if (classification === 'unknown') {
-    details['unknown'] =
-      'Đây là tin nhắn không xác định. Hãy cập nhật bộ từ khóa.'
+      }
+    }
   }
 
   return {
     residentMessage: message,
-    classificationResult: classification,
+    classificationResult,
     details
   }
 }
-
-trainClassifier()
 
 module.exports = classifyMessage

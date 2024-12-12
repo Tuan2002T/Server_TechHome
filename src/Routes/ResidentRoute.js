@@ -47,8 +47,7 @@ const {
   createPayment,
   paymentWebhook,
   cancelledPayment,
-  getBills,
-  testSocket
+  getBills
 } = require('../Controller/ResidentController/Payment')
 const { refreshToken } = require('../Controller/RefreshToken')
 const { getAllEvents } = require('../Controller/ResidentController/Events')
@@ -98,6 +97,5 @@ router.post('/createPayment', auth, createPayment)
 router.post('/paymentWebhook', paymentWebhook)
 router.get('/getBills', auth, getBills)
 router.get('/getAllEvents/:buildingId', auth, getAllEvents)
-router.get('/testSocket', testSocket)
 
 module.exports = router
