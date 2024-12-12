@@ -113,6 +113,13 @@ const createSocket = (server) => {
       })
     })
 
+    socket.on('sendNotificationComplaint', (userId, message) => {
+      const user = usersOnline.find((user) => user.userId === userId)
+      if (user && io) {
+        io.to(user.socketId).emit('notificationComplaint', message)
+      }
+    })
+
     eventEmitter.on('sendNotification', (userId, message) => {
       console.log('Sending notification via eventEmitter')
 

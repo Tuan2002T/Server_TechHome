@@ -201,6 +201,10 @@ const paymentWebhook = async (req, res) => {
       return res.status(400).json({ message: 'Invalid webhook payload' })
     }
 
+    if (data.orderCode == 123) {
+      return res.status(200).json({ message: 'Payment successful' })
+    }
+
     const payment = await Payment.findOne({
       where: { orderCode: data.orderCode },
       transaction
