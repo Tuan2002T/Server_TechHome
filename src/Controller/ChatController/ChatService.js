@@ -9,108 +9,108 @@ const {
 
 require('../../Model/ModelDefinition')
 
-// const getAllChats = async (req, res) => {
-//   try {
-//     if (req.user.roleId === 1) {
-//       const adminId = await Admin.findOne({
-//         where: { adminId: req.admin.adminId }
-//       })
-//       const chats = await Chat.findAll({
-//         // where: { adminId: adminId.adminId }
-//       })
-//       return res.status(200).json({ status: true, data: chats })
-//     }
-//     console.log('tới đây chưa', req.resident.residentId)
-
-//     const chats = await Chat.findAll({
-//       include: [
-//         {
-//           model: Resident,
-//           as: 'Residents',
-//           where: { residentId: req.resident.residentId },
-//           required: true,
-//           // attributes: []
-//         }
-//       ]
-//     })
-
-//     res.status(200).json({ status: true, data: chats })
-//   } catch (error) {
-//     res.status(500).json({
-//       message: 'Error retrieving chats',
-//       error: error.message
-//     })
-//   }
-// }
-
 const getAllChats = async (req, res) => {
   try {
-    let chats
-
     if (req.user.roleId === 1) {
       const adminId = await Admin.findOne({
         where: { adminId: req.admin.adminId }
       })
-
-      chats = await Chat.findAll({
-        // where: { adminId: adminId.adminId },
-        include: [
-          {
-            model: Resident,
-            as: 'Residents',
-            through: { attributes: [] },
-            include: [
-              {
-                model: User,
-                as: 'User'
-              }
-            ]
-          }
-        ]
+      const chats = await Chat.findAll({
+        // where: { adminId: adminId.adminId }
       })
-    } else {
-      chats = await Chat.findAll({
-        include: [
-          {
-            model: Resident,
-            as: 'Residents',
-            where: { residentId: req.resident.residentId },
-            required: true,
-            through: { attributes: [] }
-          }
-        ]
-      })
+      return res.status(200).json({ status: true, data: chats })
     }
+    console.log('tới đây chưa', req.resident.residentId)
 
-    // Định dạng lại dữ liệu để thêm cột `members` và ẩn `Residents`
-    const formattedChats = chats.map((chat) => {
-      const members = chat.Residents.map((resident) => ({
-        residentId: resident.residentId,
-        userId: resident.User?.userId,
-        phonenumber: resident.phonenumber,
-        idcard: resident.idcard,
-        fullname: resident.User?.fullname,
-        username: resident.User?.username,
-        avatar: resident.User?.avatar
-      }))
-
-      return {
-        ...chat.toJSON(),
-        members, // Thêm cột `members` vào từng chat
-        // Không trả về Residents
-        Residents: undefined
-      }
+    const chats = await Chat.findAll({
+      include: [
+        {
+          model: Resident,
+          as: 'Residents',
+          where: { residentId: req.resident.residentId },
+          required: true
+          // attributes: []
+        }
+      ]
     })
 
-    return res.status(200).json({ status: true, data: formattedChats })
+    res.status(200).json({ status: true, data: chats })
   } catch (error) {
-    console.error('Error retrieving chats:', error)
     res.status(500).json({
       message: 'Error retrieving chats',
       error: error.message
     })
   }
 }
+
+// const getAllChats = async (req, res) => {
+//   try {
+//     let chats
+
+//     if (req.user.roleId === 1) {
+//       const adminId = await Admin.findOne({
+//         where: { adminId: req.admin.adminId }
+//       })
+
+//       chats = await Chat.findAll({
+//         // where: { adminId: adminId.adminId },
+//         include: [
+//           {
+//             model: Resident,
+//             as: 'Residents',
+//             through: { attributes: [] },
+//             include: [
+//               {
+//                 model: User,
+//                 as: 'User'
+//               }
+//             ]
+//           }
+//         ]
+//       })
+//     } else {
+//       chats = await Chat.findAll({
+//         include: [
+//           {
+//             model: Resident,
+//             as: 'Residents',
+//             where: { residentId: req.resident.residentId },
+//             required: true,
+//             through: { attributes: [] }
+//           }
+//         ]
+//       })
+//     }
+
+//     // Định dạng lại dữ liệu để thêm cột `members` và ẩn `Residents`
+//     const formattedChats = chats.map((chat) => {
+//       const members = chat.Residents.map((resident) => ({
+//         residentId: resident.residentId,
+//         userId: resident.User?.userId,
+//         phonenumber: resident.phonenumber,
+//         idcard: resident.idcard,
+//         fullname: resident.User?.fullname,
+//         username: resident.User?.username,
+//         avatar: resident.User?.avatar
+//       }))
+
+//       return {
+//         ...chat.toJSON(),
+//         members, // Thêm cột `members` vào từng chat
+//         // Không trả về Residents
+//         Residents: undefined
+//       }
+//     })
+
+//     return res.status(200).json({ status: true, data: formattedChats })
+//   } catch (error) {
+//     console.error('Error retrieving chats:', error)
+//     res.status(500).json({
+//       message: 'Error retrieving chats',
+//       error: error.message
+//     })
+//   }
+// }
 
 const createChat = async (req, res) => {
   try {
