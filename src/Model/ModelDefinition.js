@@ -15,9 +15,6 @@ const sequelize = new Sequelize(
   }
 )
 
-const chatResidentModal = require('./ChatResidentModal')
-const residentNotificationModal = require('./ResidentNotificationModal')
-const residentApartmentModal = require('./ResidentApartment')
 const adminModel = require('./AdminModel.js')
 const apartmentDetailModel = require('./ApartmentDetailModel.js')
 const apartmentModel = require('./ApartmentModel.js')
@@ -63,48 +60,6 @@ const ServiceBooking = sequelize.define('ServiceBooking', serviceBookingModel)
 const Chat = sequelize.define('Chat', chatModel)
 const Message = sequelize.define('Message', messageModel)
 const File = sequelize.define('File', fileModel)
-const ResidentApartment = sequelize.define(
-  'ResidentApartment',
-  residentApartmentModal
-)
-const ResidentNotification = sequelize.define(
-  'ResidentNotification',
-  residentNotificationModal
-)
-const ChatResident = sequelize.define('ChatResident', chatResidentModal)
-
-Chat.belongsToMany(Resident, {
-  through: 'ChatResident',
-  foreignKey: 'chatId',
-  onDelete: 'CASCADE' // Changed from SET NULL
-})
-Resident.belongsToMany(Chat, {
-  through: 'ChatResident',
-  foreignKey: 'residentId',
-  onDelete: 'CASCADE' // Changed from SET NULL
-})
-
-Notification.belongsToMany(Resident, {
-  through: 'ResidentNotification', // Correct reference to the join table model
-  foreignKey: 'notificationId',
-  onDelete: 'SET NULL'
-})
-Resident.belongsToMany(Notification, {
-  through: 'ResidentNotification', // Correct reference to the join table model
-  foreignKey: 'residentId',
-  onDelete: 'SET NULL'
-})
-
-Apartment.belongsToMany(Resident, {
-  through: 'ResidentApartment', // Correct reference to the join table model
-  foreignKey: 'apartmentId',
-  onDelete: 'SET NULL'
-})
-Resident.belongsToMany(Apartment, {
-  through: 'ResidentApartment', // Correct reference to the join table model
-  foreignKey: 'residentId',
-  onDelete: 'SET NULL'
-})
 
 User.belongsTo(Roles, {
   foreignKey: 'roleId',
@@ -370,8 +325,5 @@ module.exports = {
   ServiceBooking,
   Chat,
   Message,
-  File,
-  ResidentApartment,
-  ResidentNotification,
-  ChatResident
+  File
 }

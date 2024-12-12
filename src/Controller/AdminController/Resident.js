@@ -247,6 +247,13 @@ const deleteResident = async (req, res) => {
       }
     )
 
+    // 4. Delete all user associations by resident (residentId) have column userId as foreign key with userId as primary key in User table
+    await sequelize.query('DELETE FROM "Users" WHERE "userId" = ?', {
+      replacements: [resident.userId],
+      type: sequelize.QueryTypes.DELETE,
+      transaction: t
+    })
+
     await sequelize.query(
       'DELETE FROM "ServiceBookings" WHERE "residentId" = ?',
       {
@@ -262,7 +269,7 @@ const deleteResident = async (req, res) => {
       transaction: t
     })
 
-    // 4. Delete the resident
+    // 5. Delete the resident
     await resident.destroy({ transaction: t })
 
     await t.commit()
