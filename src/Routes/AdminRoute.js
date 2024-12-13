@@ -76,7 +76,8 @@ const {
   getNotifications,
   addNotification,
   updateNotification,
-  deleteNotification
+  deleteNotification,
+  sendNotificationToResidents
 } = require('../Controller/AdminController/Notification')
 const {
   getComplaints,
@@ -187,6 +188,7 @@ router.get('/notifications/getAll', auth, getNotifications)
 router.post('/notifications', auth, addNotification)
 router.put('/notifications/:id', auth, updateNotification)
 router.delete('/notifications/:id', auth, deleteNotification)
+router.post('/notifications/send', auth, sendNotificationToResidents)
 
 // manage complaints
 router.get('/complaints/getAll', auth, getComplaints)

@@ -4,7 +4,7 @@ const {
   Apartment,
   Resident,
   User,
-  ResidentApartment
+  sequelize
 } = require('../../Model/ModelDefinition')
 
 const getAllApartments = async (req, res) => {
@@ -219,37 +219,104 @@ const updateApartment = async (req, res) => {
   }
 }
 
+// const deleteApartment = async (req, res) => {
+//   try {
+//     if (req.user.roleId !== 1) {
+//       return res.status(403).json({ message: 'Access denied. Admins only.' })
+//     }
+
+//     const apartmentId = req.params.id
+
+//     // Fetch apartment along with related ResidentApartment associations
+//     const apartment = await Apartment.findOne({
+//       where: { apartmentId },
+//       include: [{ model: Resident, through: { model: ResidentApartment } }] // Include related residents through ResidentApartment
+//     })
+
+//     if (!apartment) {
+//       return res.status(400).json({ message: 'Apartment not found' })
+//     }
+
+//     // Remove associated residents explicitly from the ResidentApartment join table
+//     await ResidentApartment.destroy({
+//       where: { apartmentId }
+//     })
+
+//     // Now delete the apartment
+//     await Apartment.destroy({
+//       where: { apartmentId }
+//     })
+
+//     res.status(200).json({ message: 'Xóa căn hộ thành công' }) // "Apartment deleted successfully" in Vietnamese
+//   } catch (error) {
+//     console.error(error)
+//     res.status(500).json({ message: error.message })
+//   }
+// }
+
 const deleteApartment = async (req, res) => {
   try {
+    // Check user role
     if (req.user.roleId !== 1) {
       return res.status(403).json({ message: 'Access denied. Admins only.' })
     }
 
     const apartmentId = req.params.id
 
-    // Fetch apartment along with related ResidentApartment associations
-    const apartment = await Apartment.findOne({
-      where: { apartmentId },
-      include: [{ model: Resident, through: { model: ResidentApartment } }] // Include related residents through ResidentApartment
-    })
-
-    if (!apartment) {
-      return res.status(400).json({ message: 'Apartment not found' })
+    if (!apartmentId) {
+      return res.status(400).json({ message: 'Apartment ID is required' })
     }
 
-    // Remove associated residents explicitly from the ResidentApartment join table
-    await ResidentApartment.destroy({
-      where: { apartmentId }
-    })
+    // Check if the models are imported correctly
+    console.log('Apartment model:', Apartment)
 
-    // Now delete the apartment
-    await Apartment.destroy({
-      where: { apartmentId }
-    })
+    // Start transaction to ensure consistency
+    const t = await sequelize.transaction()
 
-    res.status(200).json({ message: 'Xóa căn hộ thành công' }) // "Apartment deleted successfully" in Vietnamese
+    try {
+      // Step 1: Remove associated residents from ResidentApartment join table
+      const residentDeleteQuery = `
+        DELETE FROM "ResidentApartments"
+        WHERE "apartmentId" = :apartmentId;
+      `
+      const residentDeleteResult = await sequelize.query(residentDeleteQuery, {
+        replacements: { apartmentId },
+        type: sequelize.QueryTypes.DELETE,
+        transaction: t
+      })
+
+      console.log(
+        `Deleted ${residentDeleteResult.rowCount} resident associations`
+      )
+
+      // Step 2: Now delete the apartment
+      const apartmentDeleteQuery = `
+        DELETE FROM "Apartments"
+        WHERE "apartmentId" = :apartmentId;
+      `
+      const apartmentDeleteResult = await sequelize.query(
+        apartmentDeleteQuery,
+        {
+          replacements: { apartmentId },
+          type: sequelize.QueryTypes.DELETE,
+          transaction: t
+        }
+      )
+
+      console.log(`Deleted ${apartmentDeleteResult.rowCount} apartments`)
+
+      // Commit transaction
+      await t.commit()
+
+      res.status(200).json({ message: 'Xóa căn hộ thành công' }) // "Apartment deleted successfully" in Vietnamese
+    } catch (error) {
+      // If any error occurs, rollback the transaction
+      await t.rollback()
+      console.error('Error during delete:', error)
+      res.status(500).json({ message: error.message })
+    }
   } catch (error) {
-    console.error(error)
+    console.error('Error in deleteApartment:', error)
     res.status(500).json({ message: error.message })
   }
 }
