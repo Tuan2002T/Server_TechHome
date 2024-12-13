@@ -1,4 +1,8 @@
-const { Notification, sequelize } = require('../../Model/ModelDefinition')
+const {
+  Notification,
+  sequelize,
+  Resident
+} = require('../../Model/ModelDefinition')
 
 const getNotifications = async (req, res) => {
   try {
@@ -84,51 +88,54 @@ const updateNotification = async (req, res) => {
 const sendNotificationToResidents = async (req, res) => {
   const t = await sequelize.transaction()
   try {
-    // Ensure the user is an admin
     if (req.user.roleId !== 1) {
-      return res.status(403).json({ message: 'Access denied. Admins only.' })
+      return res
+        .status(403)
+        .json({ message: 'Truy cập bị từ chối. Chỉ dành cho admin.' })
     }
 
-    const { notificationId, residentIds } = req.body // notificationId and residentIds array
+    const { notificationId, residentIds } = req.body
 
-    // Ensure that residentIds is an array
     if (!Array.isArray(residentIds) || residentIds.length === 0) {
       return res
         .status(400)
-        .json({ message: 'Invalid or empty residentIds array' })
+        .json({ message: 'Mảng residentIds không hợp lệ hoặc rỗng' })
     }
 
     const notification = await Notification.findByPk(notificationId)
-
     if (!notification) {
-      return res.status(404).json({ message: 'Notification not found' })
+      return res.status(404).json({ message: 'Không tìm thấy thông báo' })
     }
 
-    // Prepare values for batch insert using parameterized queries
-    const residentNotifications = residentIds.map((residentId) => {
-      return {
-        residentId,
-        notificationId,
-        status: false // Set status as false for new notifications
+    const existingResidents = await Resident.findAll({
+      where: {
+        residentId: residentIds
       }
     })
 
-    // Insert into ResidentNotifications table using a transaction
-    await sequelize.models.ResidentNotification.bulkCreate(
-      residentNotifications,
-      { transaction: t }
-    )
+    if (existingResidents.length !== residentIds.length) {
+      return res.status(400).json({ message: 'Một số cư dân không tồn tại' })
+    }
 
-    // Commit the transaction
+    await notification.addResidents(existingResidents, {
+      through: { status: false },
+      transaction: t
+    })
+
     await t.commit()
 
-    res.status(201).json({ message: 'Notifications sent to residents' })
+    res.status(201).json({
+      message: 'Thông báo đã được gửi đến các cư dân',
+      data: notification
+    })
   } catch (error) {
-    // Rollback the transaction in case of an error
     if (t) await t.rollback()
 
-    console.error(error)
-    res.status(500).json({ message: 'Internal server error' })
+    console.error('Error sending notification:', error)
+    res.status(500).json({
+      message: 'Lỗi máy chủ nội bộ',
+      error: error.message
+    })
   }
 }
 
