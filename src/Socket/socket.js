@@ -114,18 +114,29 @@ const createSocket = (server) => {
       }
     })
 
-    socket.on('sendNotificationNotification', (userId, message) => {
+    socket.on('sendNotificationNotification', (userIds, notification) => {
+      userIds.forEach((userId) => {
+        const user = usersOnline.get(userId)
+        if (user) {
+          io.to(user.socketId).emit('notificationNotification', notification)
+        }
+      })
+    })
+
+    socket.on('sendNotificationVehicle', (userId, vehicle) => {
       const user = usersOnline.get(userId)
       if (user) {
-        io.to(user.socketId).emit('notificationNotification', message)
+        io.to(user.socketId).emit('notificationVehicle', vehicle)
       }
     })
 
-    socket.on('webhookPayment', (message) => {
-      console.log('qưeqweqwe')
+    socket.on('sendNotificationServiceBooking', (userId, serviceBooking) => {
+      const user = usersOnline.get(userId)
+      if (user) {
+        io.to(user.socketId).emit('notificationServiceBooking', serviceBooking)
+      }
     })
 
-    // Xử lý khi user ngắt kết nối
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id)
 
