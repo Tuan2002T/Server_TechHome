@@ -94,6 +94,10 @@ const {
 } = require('../Controller/AdminController/Payment')
 
 const { upload } = require('../AWS/s3')
+const {
+  getAllServiceBookings,
+  deleteServiceBooking
+} = require('../Controller/AdminController/ServideBooking')
 router.get('/apartment', auth, (req, res) => {
   res.status(200).json({ message: 'Apartment endpoint is working' })
 })
@@ -204,5 +208,14 @@ router.get('/bills/getAll', auth, getBills)
 router.get('/payments/getAll', auth, getPayments)
 router.post('/payments', auth, addPayment)
 router.delete('/payments/:paymentId', auth, removePayment)
+
+//servicebooking
+
+router.get('/servicebooking/getAllServiceBookings', auth, getAllServiceBookings)
+router.delete(
+  '/servicebooking/deleteServiceBooking/:id',
+  auth,
+  deleteServiceBooking
+)
 
 module.exports = router

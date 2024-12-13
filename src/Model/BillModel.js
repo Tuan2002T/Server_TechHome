@@ -32,7 +32,7 @@ const billModel = {
     allowNull: true
   },
   billStatus: {
-    type: DataTypes.ENUM('UNPAID', 'PAID'),
+    type: DataTypes.ENUM('UNPAID', 'PAID', 'CANCELLED'),
     allowNull: false,
     defaultValue: 'UNPAID'
   },
