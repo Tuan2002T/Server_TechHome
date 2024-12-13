@@ -1,4 +1,4 @@
-const { Chat, Resident, Admin } = require('../../Model/ModelDefinition')
+const { Chat, Resident, Admin, User } = require('../../Model/ModelDefinition')
 
 require('../../Model/ModelDefinition')
 
@@ -31,6 +31,39 @@ const getAllChats = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: 'Error retrieving chats',
+      error: error.message
+    })
+  }
+}
+
+// get chat by id
+const getChatById = async (req, res) => {
+  try {
+    const chat = await Chat.findByPk(req.params.id, {
+      attributes: ['chatId', 'chatName', 'chatType'],
+      include: [
+        {
+          model: Resident,
+          as: 'Residents',
+          attributes: ['residentId', 'phonenumber', 'idcard'],
+          include: [
+            {
+              model: User,
+              as: 'User',
+              attributes: ['userId', 'username', 'fullname', 'email', 'avatar']
+            }
+          ]
+        }
+      ]
+    })
+    if (!chat) {
+      return res.status(404).json({ message: 'Chat not found' })
+    }
+
+    res.status(200).json({ status: true, data: chat })
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error retrieving chat',
       error: error.message
     })
   }
@@ -230,6 +263,7 @@ const addMember = async (req, res) => {
 
 module.exports = {
   getAllChats,
+  getChatById,
   createChat,
   updateChat,
   deleteChat,

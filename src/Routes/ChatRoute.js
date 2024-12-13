@@ -6,7 +6,9 @@ const {
   addMember,
   removeMember,
   deleteChat,
-  getAllChats
+  getAllChats,
+  getChatById,
+  updateChat
 } = require('../Controller/ChatController/ChatService')
 const {
   sendMessages,
@@ -29,5 +31,7 @@ router.get('/getAllMessagesByChatId/:id', auth, getAllMessagesByChatId)
 router.post('/sendMessageAI', sendMessageAI)
 router.post('/sendChatBot', auth, sendChatBot)
 router.get('/getAllFilesByChatId/:id', auth, getAllFilesByChatId)
+router.get('/getChatById/:id', auth, getChatById)
+router.put('/updateChat/:id', auth, updateChat)
 
 module.exports = router
