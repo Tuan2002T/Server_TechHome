@@ -7,7 +7,7 @@ const {
 } = require('../../Model/ModelDefinition')
 const payos = require('../../Payment/PayOs')
 const { notificationPush } = require('../../FireBase/NotificationPush')
-const { io, usersOnline, eventEmitter } = require('../../Socket/socket')
+const { usersOnline, eventEmitter } = require('../../Socket/socket')
 
 const createPayment = async (req, res) => {
   const transaction = await sequelize.transaction()
@@ -222,8 +222,6 @@ const getBills = async (req, res) => {
       }
     })
 
-    console.log(bills)
-
     const totalAmount = bills.reduce(
       (sum, bill) => sum + parseFloat(bill.billAmount),
       0
@@ -251,21 +249,64 @@ const getBills = async (req, res) => {
   }
 }
 
-const testSocket = async (req, res) => {
+const payment = async (data, desc) => {
+  const transaction = await sequelize.transaction()
   try {
-    console.log('đây')
-    console.log(usersOnline)
+    const paymentRecord = await Payment.findOne({
+      where: { orderCode: data.orderCode },
+      transaction
+    })
 
-    const user = usersOnline.find((user) => user.userId === 3)
-    console.log(user)
-    console.log(eventEmitter)
-
-    if (user) {
-      eventEmitter.emit('sendNotification', 3, 'Hello User 3')
+    if (!paymentRecord) {
+      await transaction.rollback()
+      return { message: 'Payment not found', userId: null }
     }
-    res.status(200).json({ message: 'Notification sent' })
+
+    if (desc === 'success') {
+      paymentRecord.paymentStatus = 'Success'
+      await paymentRecord.save({ transaction })
+
+      const billPayments = await Bill.findAll({
+        include: {
+          model: Payment,
+          where: { paymentId: paymentRecord.paymentId },
+          through: {
+            attributes: []
+          }
+        },
+        transaction
+      })
+
+      await Promise.all(
+        billPayments.map(async (bill) => {
+          bill.billStatus = 'PAID'
+          await bill.save({ transaction })
+        })
+      )
+
+      await transaction.commit()
+
+      const resident = await Resident.findOne({
+        where: { residentId: billPayments[0].residentId }
+      })
+
+      if (!resident) {
+        return { message: 'Resident not found', userId: null }
+      }
+
+      return { message: 'Payment successful', userId: resident.userId }
+    } else {
+      paymentRecord.paymentStatus = 'Failed'
+      await paymentRecord.save({ transaction })
+      await transaction.commit()
+
+      console.log('Payment status updated to Failed.')
+      return { message: 'Payment failed', userId: null }
+    }
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    await transaction.rollback()
+    console.error('Error processing webhook:', error)
+    return { message: 'Internal Server Error', userId: null }
   }
 }
 
@@ -274,5 +315,5 @@ module.exports = {
   paymentWebhook,
   cancelledPayment,
   getBills,
-  testSocket
+  payment
 }

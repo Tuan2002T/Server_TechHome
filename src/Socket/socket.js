@@ -1,8 +1,10 @@
 const { Server } = require('socket.io')
+const EventEmitter = require('events')
 
 let io
 const usersOnline = new Map()
 const chatRooms = new Map()
+const eventEmitter = new EventEmitter()
 
 const createSocket = (server) => {
   io = new Server(server, {
@@ -30,7 +32,9 @@ const createSocket = (server) => {
     socket.on('joinChat', (chatId) => {
       console.log('Joining chat:', chatId)
 
-      const user = usersOnline.get(socket.id)
+      const user = Array.from(usersOnline.values()).find(
+        (u) => u.socketId === socket.id
+      )
       if (!user) {
         console.error('User not found for socket:', socket.id)
         return
@@ -54,7 +58,6 @@ const createSocket = (server) => {
         chatRoom.users = chatRoom.users.filter(
           (user) => user.socketId !== socket.id
         )
-
         if (chatRoom.users.length === 0) {
           chatRooms.delete(chatId)
         }
@@ -62,6 +65,67 @@ const createSocket = (server) => {
       console.log('Chat rooms:', Array.from(chatRooms.values()))
     })
 
+    socket.on('sendMessage', (message, chatId) => {
+      const chatRoom = chatRooms.get(chatId)
+      if (!chatRoom) {
+        console.error(`Chat room not found for chatId: ${chatId}`)
+        return
+      }
+
+      chatRoom.users.forEach((user) => {
+        if (user.socketId !== socket.id) {
+          io.to(user.socketId).emit('receiveMessage', message)
+        }
+      })
+    })
+
+    socket.on('deleteMessage', (chatId, messageId) => {
+      const chatRoom = chatRooms.get(chatId)
+      if (!chatRoom) {
+        console.error(`Chat room not found for chatId: ${chatId}`)
+        return
+      }
+
+      chatRoom.users.forEach((user) => {
+        io.to(user.socketId).emit('deleteMessage', messageId)
+      })
+    })
+
+    socket.on('sendNotification', (notification, userIds) => {
+      userIds.forEach((userId) => {
+        const user = usersOnline.get(userId)
+        if (user) {
+          io.to(user.socketId).emit('notification', notification)
+        }
+      })
+    })
+
+    socket.on('sendNotificationComplaint', (userId, complaint) => {
+      const user = usersOnline.get(userId)
+      if (user) {
+        io.to(user.socketId).emit('notificationComplaint', complaint)
+      }
+    })
+
+    socket.on('sendNotificationEvent', (userId, event) => {
+      const user = usersOnline.get(userId)
+      if (user) {
+        io.to(user.socketId).emit('notificationEvent', event)
+      }
+    })
+
+    socket.on('sendNotificationNotification', (userId, message) => {
+      const user = usersOnline.get(userId)
+      if (user) {
+        io.to(user.socketId).emit('notificationNotification', message)
+      }
+    })
+
+    socket.on('webhookPayment', (message) => {
+      console.log('qưeqweqwe')
+    })
+
+    // Xử lý khi user ngắt kết nối
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id)
 
@@ -75,15 +139,23 @@ const createSocket = (server) => {
       chatRooms.forEach((room) => {
         room.users = room.users.filter((user) => user.socketId !== socket.id)
       })
+      chatRooms.forEach((room, chatId) => {
+        if (room.users.length === 0) {
+          chatRooms.delete(chatId)
+        }
+      })
 
       console.log('Users online:', Array.from(usersOnline.values()))
       console.log('Chat rooms:', Array.from(chatRooms.values()))
     })
   })
+
+  return io
 }
 
 module.exports = {
   createSocket,
   io,
-  usersOnline
+  usersOnline,
+  eventEmitter
 }
