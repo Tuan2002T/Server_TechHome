@@ -1,5 +1,6 @@
 const { Server } = require('socket.io')
 const EventEmitter = require('events')
+const { User, Resident } = require('../Model/ModelDefinition')
 
 let io
 const usersOnline = new Map()
@@ -100,21 +101,41 @@ const createSocket = (server) => {
       })
     })
 
-    socket.on('sendNotificationComplaint', (userId, complaint) => {
-      const user = usersOnline.get(userId)
-      if (user) {
-        io.to(user.socketId).emit('notificationComplaint', complaint)
+    socket.on('sendNotificationComplaint', async (residentId, complaint) => {
+      try {
+        const userData = await Resident.findOne({ where: { residentId } })
+
+        if (!userData) {
+          console.error('User not found for residentId:', residentId)
+          return
+        }
+
+        const userId = userData.userId
+        const user = usersOnline.get(userId)
+
+        if (user) {
+          io.to(user.socketId).emit('notificationComplaint', complaint)
+        }
+      } catch (error) {
+        console.error('Error handling sendNotificationComplaint:', error)
       }
     })
 
-    socket.on('sendNotificationEvent', (userId, event) => {
-      const user = usersOnline.get(userId)
-      if (user) {
-        io.to(user.socketId).emit('notificationEvent', event)
-      }
+    socket.on('sendNotificationEvent', (event) => {
+      const userIds = Array.from(usersOnline.keys())
+      userIds.forEach((userId) => {
+        const user = usersOnline.get(userId)
+        if (user) {
+          io.to(user.socketId).emit('notificationEvent', event)
+        }
+      })
     })
 
     socket.on('sendNotificationNotification', (userIds, notification) => {
+      if (!Array.isArray(userIds)) {
+        console.log('UserIds phải là mảng')
+        return
+      }
       userIds.forEach((userId) => {
         const user = usersOnline.get(userId)
         if (user) {
