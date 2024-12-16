@@ -35,6 +35,8 @@ const serviceBookingModel = require('./ServiceBookingsModel.js')
 const chatModel = require('./ChatModel.js')
 const messageModel = require('./MessageModel.js')
 const fileModel = require('./FileModel.js')
+const advertisementModel = require('./AdvertisementModel.js')
+const outsourcingServiceModel = require('./OutsourcingServiceModel.js')
 const sequelizePaginate = require('sequelize-paginate')
 
 const Admin = sequelize.define('Admin', adminModel)
@@ -60,6 +62,11 @@ const ServiceBooking = sequelize.define('ServiceBooking', serviceBookingModel)
 const Chat = sequelize.define('Chat', chatModel)
 const Message = sequelize.define('Message', messageModel)
 const File = sequelize.define('File', fileModel)
+const Advertisement = sequelize.define('Advertisement', advertisementModel)
+const OutsourcingService = sequelize.define(
+  'OutsourcingService',
+  outsourcingServiceModel
+)
 
 User.belongsTo(Roles, {
   foreignKey: 'roleId',
@@ -286,6 +293,36 @@ File.belongsToMany(Message, {
   foreignKey: 'fileId',
   onDelete: 'SET NULL'
 })
+
+// OutsourcingService.belongsTo(Admin, {
+//   foreignKey: 'adminId',
+//   onDelete: 'SET NULL'
+// })
+// Admin.hasMany(OutsourcingService, {
+//   foreignKey: 'adminId',
+//   onDelete: 'SET NULL'
+// })
+
+OutsourcingService.belongsTo(Resident, {
+  foreignKey: 'residentId',
+  onDelete: 'SET NULL'
+})
+
+Resident.hasMany(OutsourcingService, {
+  foreignKey: 'residentId',
+  onDelete: 'SET NULL'
+})
+
+Advertisement.belongsTo(Resident, {
+  foreignKey: 'residentId',
+  onDelete: 'SET NULL'
+})
+
+Resident.hasMany(Advertisement, {
+  foreignKey: 'residentId',
+  onDelete: 'SET NULL'
+})
+
 sequelizePaginate.paginate(Message)
 sequelizePaginate.paginate(Chat)
 sequelizePaginate.paginate(Notification)
@@ -325,5 +362,7 @@ module.exports = {
   ServiceBooking,
   Chat,
   Message,
-  File
+  File,
+  Advertisement,
+  OutsourcingService
 }

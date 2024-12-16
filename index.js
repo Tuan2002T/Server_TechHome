@@ -11,6 +11,7 @@ app.use(bodyParser.json())
 const adminRoute = require('./src/Routes/AdminRoute')
 const residentRoute = require('./src/Routes/ResidentRoute')
 const chatRoute = require('./src/Routes/ChatRoute')
+const serviceProrviderRoute = require('./src/Routes/ServiceProrviderRoute')
 const { createSocket, io, usersOnline } = require('./src/Socket/socket')
 const { payment } = require('./src/Controller/ResidentController/Payment')
 
@@ -39,6 +40,7 @@ app.get('/', (req, res) => {
 app.use('/admin', adminRoute)
 app.use('/resident', residentRoute)
 app.use('/chat', chatRoute)
+app.use('/advertisement', serviceProrviderRoute)
 app.post('/webhook', async (req, res) => {
   const { data, desc } = req.body
   if (data && data.orderCode == 123) {

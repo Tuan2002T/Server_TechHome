@@ -14,13 +14,18 @@ const ResidentModel = {
     type: DataTypes.STRING,
     allowNull: false
   },
-  fcmToken : {
+  fcmToken: {
     type: DataTypes.STRING,
     allowNull: true
   },
   active: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  role: {
+    type: DataTypes.ENUM('RESIDENT', 'SERVICEPROVIDER'),
+    allowNull: true,
+    defaultValue: 'RESIDENT'
   }
 }
 

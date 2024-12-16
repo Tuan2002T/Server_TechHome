@@ -37,8 +37,6 @@ const createBill = async (req, res) => {
       return res.status(404).json({ message: 'Service booking not found' })
     }
 
-    console.log(serviceBooking)
-
     const bill = await Bill.create({
       serviceBookingId,
       billAmount: serviceBooking.servicePrice,
