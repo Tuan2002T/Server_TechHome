@@ -5,7 +5,14 @@ const {
   sequelize,
   Resident
 } = require('../../Model/ModelDefinition')
-const payos = require('../../Payment/PayOs')
+const PayOS = require('@payos/node')
+
+const payos = new PayOS(
+  process.env.PAYOS_CLIENT_ID,
+  process.env.PAYOS_API_KEY,
+  process.env.PAYOS_CHECKSUM_KEY
+)
+
 const { notificationPush } = require('../../FireBase/NotificationPush')
 const { usersOnline, eventEmitter } = require('../../Socket/socket')
 
