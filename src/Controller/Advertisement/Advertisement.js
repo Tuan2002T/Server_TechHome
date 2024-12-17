@@ -78,7 +78,7 @@ const updateAdvertisement = async (req, res) => {
       return res.status(404).json({ message: 'Advertisement not found' })
     }
 
-    if (advertisement.residentId !== req.user.residentId) {
+    if (advertisement.residentId !== req.resident.residentId) {
       return res
         .status(403)
         .json({ message: 'Access denied. Advertisement owner only.' })
@@ -108,7 +108,6 @@ const updateAdvertisement = async (req, res) => {
       advertisement.adverLocation = adverLocation
     }
 
-    // Sử dụng phương thức cập nhật đúng
     await Advertisement.update(
       {
         advertisementName: advertisement.advertisementName,
@@ -140,11 +139,11 @@ const deleteAdvertisement = async (req, res) => {
       return res.status(404).json({ message: 'Advertisement not found' })
     }
 
-    if (advertisement.residentId !== req.user.residentId) {
-      return res
-        .status(403)
-        .json({ message: 'Access denied. Advertisement owner only.' })
-    }
+    // if (advertisement.residentId !== req.resident.residentId) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: 'Access denied. Advertisement owner only.' })
+    // }
 
     await advertisement.destroy()
 

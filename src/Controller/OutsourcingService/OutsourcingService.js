@@ -143,7 +143,6 @@ const updateOutsourcingService = async (req, res) => {
 const deleteOutsourcingService = async (req, res) => {
   try {
     const outsourcingServiceId = req.params.id
-    console.log('outsourcingServiceId', outsourcingServiceId)
 
     const outsourcingService = await OutsourcingService.findOne({
       where: {
