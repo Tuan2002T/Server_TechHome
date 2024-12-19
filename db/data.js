@@ -226,55 +226,55 @@ async function insertApartments() {
       ('103', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1),
       ('104', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1),
       ('105', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1),
-    
+
       ('201', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
       ('202', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
       ('203', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
       ('204', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
       ('205', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
-    
+
       ('301', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3),
       ('302', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3),
       ('303', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3),
       ('304', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3),
       ('305', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3),
-    
+
       ('401', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4),
       ('402', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4),
       ('403', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4),
       ('404', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4),
       ('405', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4),
-    
+
       ('501', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5),
       ('502', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5),
       ('503', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5),
       ('504', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5),
       ('505', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5),
-    
+
       ('601', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6),
       ('602', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6),
       ('603', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6),
       ('604', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6),
       ('605', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6),
-    
+
       ('701', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7),
       ('702', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7),
       ('703', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7),
       ('704', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7),
       ('705', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7),
-    
+
       ('801', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 8),
       ('802', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 8),
       ('803', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 8),
       ('804', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 8),
       ('805', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 8),
-    
+
       ('901', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9),
       ('902', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9),
       ('903', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9),
       ('904', '3BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9),
       ('905', 'Penthouse', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9),
-    
+
       ('1001', 'Studio', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 10),
       ('1002', '1BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 10),
       ('1003', '2BR', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 10),
@@ -309,6 +309,27 @@ async function insertAdmins() {
     console.error('Error insert admins', error)
   }
 }
+async function insertResidents123123() {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(
+      `INSERT INTO "Residents" ("phonenumber", "idcard", "active", "createdAt", "updatedAt", "userId", "role") VALUES
+        ('0912345678', '123456789012', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9, 'SERVICEPROVIDER'),
+        ('0912345679', '123456789013', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 10, 'SERVICEPROVIDER'),
+        ('0912345680', '123456789014', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3, 'SERVICEPROVIDER'),
+        ('0912345681', '123456789015', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4, 'SERVICEPROVIDER');`
+    )
+
+    await client.query('COMMIT')
+    console.log('Insert residents1231231231 successfully')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error('Error insert residents', error)
+  } finally {
+    client.release()
+  }
+}
 
 async function insertResidents() {
   const client = await pool.connect()
@@ -316,10 +337,6 @@ async function insertResidents() {
     await client.query('BEGIN')
     await client.query(
       `INSERT INTO "Residents" ("phonenumber", "idcard", "active", "createdAt", "updatedAt", "userId") VALUES
-      ('0912345678', '123456789012', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9),
-      ('0912345679', '123456789013', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 10),
-      ('0912345680', '123456789014', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3),
-      ('0912345681', '123456789015', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4),
       ('0912345682', '123456789016', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5),
       ('0912345683', '123456789017', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6),
       ('0912345684', '123456789018', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7),
@@ -442,148 +459,148 @@ async function insertResidentApartments() {
       `INSERT INTO "ResidentApartments" ("createdAt", "updatedAt", "apartmentId", "residentId") VALUES
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 1),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 2),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2, 3),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2, 4),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3, 5),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3, 6),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4, 7),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4, 8),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5, 9),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5, 10),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, 11),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, 12),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7, 13),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 7, 14),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 8, 15),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 8, 16),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9, 17),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 9, 18),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 10, 19),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 10, 20),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 11, 21),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 11, 22),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 12, 23),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 12, 24),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 13, 25),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 13, 26),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 14, 27),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 14, 28),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 15, 29),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 15, 30),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 16, 31),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 16, 32),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 17, 33),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 17, 34),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 18, 35),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 18, 36),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 19, 37),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 19, 38),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 20, 39),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 20, 40),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 21, 41),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 21, 42),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 22, 43),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 22, 44),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 23, 45),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 23, 46),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 24, 47),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 24, 48),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 25, 49),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 25, 50),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 26, 51),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 26, 52),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 27, 53),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 27, 54),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 28, 55),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 28, 56),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 29, 57),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 29, 58),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 30, 59),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 30, 60),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 31, 61),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 31, 62),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 32, 63),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 32, 64),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 33, 65),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 33, 66),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 34, 67),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 34, 68),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 35, 69),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 35, 70),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 36, 71),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 36, 72),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 37, 73),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 37, 74),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 38, 75),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 38, 76),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 39, 77),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 39, 78),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 40, 79),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 40, 80),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 41, 81),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 41, 82),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 42, 83),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 42, 84),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 43, 85),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 43, 86),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 44, 87),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 44, 88),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 45, 89),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 45, 90),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 46, 91),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 46, 92),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 47, 93),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 47, 94),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 48, 95),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 48, 96),
-    
+
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 49, 97),
       (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 49, 98);`
     )
@@ -1033,7 +1050,7 @@ async function insertEvents() {
       ('Lớp Yoga', 'Buổi tập yoga hàng tuần', 'Hội trường cộng đồng', '2024-09-07', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1),
       ('Ngày Trẻ Em', 'Hoạt động vui chơi cho trẻ em', 'Sân chơi', '2024-07-22', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1),
       ('Cuộc Họp Câu Lạc Bộ Sách', 'Thảo luận sách hàng tháng', 'Thư viện', '2024-11-15', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1),
-    
+
       ('Tiệc BBQ Mùa Hè', 'Tiệc BBQ cộng đồng hàng năm', 'Sân sau', '2024-07-15', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
       ('Tiệc Cuối Năm', 'Lễ kỷ niệm cuối năm', 'Hội trường cộng đồng', '2024-12-20', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
       ('Workshop Thể Dục', 'Học các bài tập thể dục mới', 'Phòng tập', '2024-10-05', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
@@ -1485,6 +1502,70 @@ async function insertChatResidentsAdmin() {
   }
 }
 
+async function insertAdvertisemts() {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+
+    await client.query(`
+      INSERT INTO "Advertisements" ("advertisementName", "advertisementContent", "advertisementImage", "adverLocation", "createdAt", "updatedAt", "residentId")
+      VALUES
+        ('KFC', 'Gà Địa Trung Hải, Xốt mayo Ý phủ khoai tây xông khói', 'https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/176808/Originals/poster-do-an-1.jpg', '451 Thống Nhất, F11, GV, HCM', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('Haidilao Hotpot', 'Quán lẩu Haidilao Hotpot khai trương chi nhánh mới!', 'https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/176808/Originals/poster-do-an-2.jpg', 'TTTM Vincom, 12 Phan Văn Trị, F7, GV, HCM',  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('Mỳ Cay Sasin', 'Mỳ cay Sasin khai trương chi nhánh mới!', 'https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/176808/Originals/poster-do-an-3.jpg', '144 Quang Trung, F10, GV, HCM',  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('My Box', 'My Box đã có món mới, mời bạn thưởng thức!', 'https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/176808/Originals/poster-do-an-4.jpg', 'Gò Vấp, Hồ Chí Minh',  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('Phở Tình', 'Phở thình khai trương của hàng mới!', 'https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/176808/Originals/poster-do-an-7.jpg', 'Gò Vấp, Hồ Chí Minh', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('Hotpot Story', 'Quán lẩu Hotpot Story khai trương của hàng mới!', 'https://intphcm.com/data/upload/poster-quang-cao-web-do-an.jpg', 'Gò Vấp, Hồ Chí Minh',  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('Jollibee', 'Siêu sale cuối năm', 'https://shorturl.at/IHLv4', 'Gò Vấp Hồ Chí Minh',  CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('Bánh mì PEW PEW', 'Mua 2 tặng 1 bánh mì chuối nướng', 'https://shorturl.at/6U9SW', 'Phan Văn Trị, Gò Vấp', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('YoshiYoshi Coffee & Tea', 'DEAL 1K khi mua ly giữ nhiệt kèm nước YoshiYoshi
+      Ưu điểm: Tiện lợi, giữ nhiệt lâu, giảm 10% cho mỗi lần mang ly giữ nhiệt YoshiYoshi đến trực tiếp quán order nước', 'https://shorturl.at/fcn4E', '48 Quang Trung, F10, GV, HCM', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2),
+        ('Hồng Trà Ngô Gia', 'CHÀO ĐÓN GIÁNG SINH BẰNG THỨC UỐNG MỚI🎄🧋
+      Bật mí bất ngờ đầu tiên mà Ngô Gia mang đến cho các bạn mùa Giáng Sinh này sẽ là một thức uống mới dự đoán sẽ gây nghiện dài dài🤤
+      Tung hint cỡ này mà còn không đoán ra thì... tag "đồng hút" vào nhờ giải đáp liền đi nha😅
+      ⏳Coming soon 22/12/2024...', 'https://shorturl.at/bczJK', '187 Thống Nhất, F10, GV, HCM', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2);
+    `)
+
+    await client.query('COMMIT')
+    console.log('Inserted Advertisements successfully')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error('Error inserting Advertisements', error)
+  } finally {
+    client.release()
+  }
+}
+
+async function insertExternalServices() {
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+
+    await client.query(`
+      INSERT INTO public."OutsourcingServices"(
+        "outsourcingServiceName", "outsourcingServiceDescription", "outsourcingServiceImage",
+        "createdAt", "outsourceServicePrice", "outsourceServiceLocation",
+        "outsourcingServiceType", "updatedAt", "residentId")
+      VALUES
+        ('FOOD JOLLIBEE', 'Description of service 1', 'https://shorturl.at/CFCSB', CURRENT_TIMESTAMP, 100, 'Location 1', 'FOOD', CURRENT_TIMESTAMP, 3),
+        ('YoshiYoshi Coffee & Tea', 'Description of service 2', 'https://shorturl.at/KnzV2', CURRENT_TIMESTAMP, 150, 'Location 2', 'FOOD', CURRENT_TIMESTAMP, 3),
+        ('KATINAT', 'Description of service 3', 'https://shorturl.at/2AqKI', CURRENT_TIMESTAMP, 200, 'Location 3', 'FOOD', CURRENT_TIMESTAMP, 3),
+        ('Country Houses Coffee', 'Description of service 4', 'https://cdn.tgdd.vn/Files/2020/12/17/1314386/list-5-quan-ca-phe-do-uong-ngon-view-dep-tha-ho-ma-song-ao-o-go-vap-202012171330357740.jpg', CURRENT_TIMESTAMP, 250, 'Location 4', 'FOOD', CURRENT_TIMESTAMP, 3),
+        ('Saigon Chic', 'Description of service 5', 'https://cdn.tgdd.vn/Files/2020/12/17/1314386/list-5-quan-ca-phe-do-uong-ngon-view-dep-tha-ho-ma-song-ao-o-go-vap-202012171333405107.jpg', CURRENT_TIMESTAMP, 300, 'Location 5', 'FOOD', CURRENT_TIMESTAMP, 3),
+        ('Dê tươi Hiệp Thành', 'Description of service 6', 'https://shorturl.at/qQcXb', CURRENT_TIMESTAMP, 350, 'Location 6', 'FOOD', CURRENT_TIMESTAMP, 3),
+        ('Ốc lắc Cô Mai', 'Description of service 7', 'https://cdn.tgdd.vn/Files/2020/12/16/1314120/tong-hop-5-quan-an-toi-ngon-hap-dan-o-go-vap-202208300737076155.jpg', CURRENT_TIMESTAMP, 400, 'Location 7', 'FOOD', CURRENT_TIMESTAMP, 3);
+    `)
+
+    await client.query('COMMIT')
+    console.log('Inserted ChatResidents bot successfully')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    console.error('Error inserting ChatResidents', error)
+  } finally {
+    client.release()
+  }
+}
+
 async function insertData() {
   await insertRoles()
   await insertUsers()
@@ -1492,6 +1573,7 @@ async function insertData() {
   await insertFloors()
   await insertApartments()
   await insertAdmins()
+  await insertResidents123123()
   await insertResidents()
   await insertResidentApartments()
   await insertComplaints()
@@ -1511,6 +1593,8 @@ async function insertData() {
   await insertChatResidentsResident2()
   await insertChatResidentsBot()
   await insertChatResidentsAdmin()
+  await insertAdvertisemts()
+  await insertExternalServices()
   process.exit()
 }
 
