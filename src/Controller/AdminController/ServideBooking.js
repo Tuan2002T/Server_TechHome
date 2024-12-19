@@ -101,7 +101,13 @@ const getServiceBookingsByServiceProviders = async (req, res) => {
       },
       include: [
         {
+          model: ServiceBooking
+        }
+      ],
+      include: [
+        {
           model: Resident,
+          attributes: ['residentId', 'phonenumber'],
           include: [
             {
               model: User
@@ -114,6 +120,7 @@ const getServiceBookingsByServiceProviders = async (req, res) => {
     const formattedBills = bills.map((bill) => ({
       billName: bill.billName,
       billDate: bill.billDate,
+      billAmount: bill.billAmount,
       billStatus: bill.billStatus,
       fullname: bill.Resident?.User?.fullname || null,
       email: bill.Resident?.User?.email || null,
