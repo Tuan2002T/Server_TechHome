@@ -18,7 +18,12 @@ const {
   deleteOutsourcingService,
   updateOutsourcingServiceAdmin
 } = require('../Controller/OutsourcingService/OutsourcingService')
-const { registerServiceProvider } = require('../Controller/SERVICEPROVIDER/ServiceProvider')
+const {
+  registerServiceProvider
+} = require('../Controller/SERVICEPROVIDER/ServiceProvider')
+const {
+  getServiceBookingsByServiceProviders
+} = require('../Controller/AdminController/ServideBooking')
 
 //Advertisement routes
 router.get('/getAllAdvertisements', auth, getAllAdvertisements)
@@ -67,5 +72,11 @@ router.put(
 )
 
 router.post('/registerServiceProvider', auth, registerServiceProvider)
+
+router.get(
+  '/getServiceBookingsByServiceProviders',
+  auth,
+  getServiceBookingsByServiceProviders
+)
 
 module.exports = router

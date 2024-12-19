@@ -2,7 +2,9 @@ const {
   Service,
   User,
   ServiceBooking,
-  Bill
+  Bill,
+  OutsourcingService,
+  Resident
 } = require('../../Model/ModelDefinition')
 
 const getAllServiceBookings = async (req, res) => {
@@ -57,7 +59,78 @@ const deleteServiceBooking = async (req, res) => {
   }
 }
 
+const getServiceBookingsByServiceProviders = async (req, res) => {
+  try {
+    if (req.user.roleId !== 2) {
+      return res
+        .status(403)
+        .json({ message: 'Access denied. Service Providers only.' })
+    }
+
+    const outsourcedServices = await OutsourcingService.findAll({
+      where: { residentId: req.resident.residentId },
+      attributes: ['outsourcingServiceId', 'residentId']
+    })
+
+    if (!outsourcedServices || outsourcedServices.length === 0) {
+      return res.status(404).json({ message: 'Outsourced services not found' })
+    }
+
+    const outsourcingServiceIds = outsourcedServices.map(
+      (service) => service.outsourcingServiceId
+    )
+
+    const serviceBookings = await ServiceBooking.findAll({
+      where: {
+        outsourcingServiceId: outsourcingServiceIds
+      },
+      attributes: ['serviceBookingId', 'outsourcingServiceId']
+    })
+
+    if (!serviceBookings || serviceBookings.length === 0) {
+      return res.status(404).json({ message: 'Service bookings not found' })
+    }
+
+    const serviceBookingIds = serviceBookings.map(
+      (booking) => booking.serviceBookingId
+    )
+
+    const bills = await Bill.findAll({
+      where: {
+        serviceBookingId: serviceBookingIds // Array chứa serviceBookingIds
+      },
+      include: [
+        {
+          model: Resident,
+          include: [
+            {
+              model: User
+            }
+          ]
+        }
+      ]
+    })
+
+    const formattedBills = bills.map((bill) => ({
+      billName: bill.billName,
+      billDate: bill.billDate,
+      billStatus: bill.billStatus,
+      fullname: bill.Resident?.User?.fullname || null,
+      email: bill.Resident?.User?.email || null,
+      phonenumber: bill.Resident?.phonenumber || null
+    }))
+
+    res.status(200).json({
+      data: formattedBills
+    })
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching services and bills' })
+    console.log('Error getting services and bills:', error)
+  }
+}
+
 module.exports = {
   getAllServiceBookings,
-  deleteServiceBooking
+  deleteServiceBooking,
+  getServiceBookingsByServiceProviders
 }
