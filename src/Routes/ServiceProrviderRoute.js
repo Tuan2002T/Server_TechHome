@@ -18,6 +18,7 @@ const {
   deleteOutsourcingService,
   updateOutsourcingServiceAdmin
 } = require('../Controller/OutsourcingService/OutsourcingService')
+const { registerServiceProvider } = require('../Controller/SERVICEPROVIDER/ServiceProvider')
 
 //Advertisement routes
 router.get('/getAllAdvertisements', auth, getAllAdvertisements)
@@ -64,5 +65,7 @@ router.put(
   upload.single('file'),
   updateOutsourcingServiceAdmin
 )
+
+router.post('/registerServiceProvider', auth, registerServiceProvider)
 
 module.exports = router
