@@ -3,6 +3,7 @@ const router = express.Router()
 const auth = require('../Middleware/auth')
 const {
   getAllAdvertisements,
+  getAdvertisementById,
   createAdvertisement,
   deleteAdvertisement,
   updateAdvertisement,
@@ -11,6 +12,7 @@ const {
 const { upload } = require('../AWS/s3')
 const {
   getAllOutsourcingServices,
+  getOutsourcingServiceById,
   createOutsourcingService,
   updateOutsourcingService,
   deleteOutsourcingService,
@@ -19,6 +21,7 @@ const {
 
 //Advertisement routes
 router.get('/getAllAdvertisements', auth, getAllAdvertisements)
+router.get('/getAdvertisementById/:id', auth, getAdvertisementById)
 router.post(
   '/createAdvertisement',
   auth,
@@ -41,6 +44,7 @@ router.put(
 
 //Outsourcing service routes
 router.get('/getAllOutsourcingServices', auth, getAllOutsourcingServices)
+router.get('/getOutsourcingServiceById/:id', auth, getOutsourcingServiceById)
 router.post(
   '/createOutsourcingService',
   auth,

@@ -1,11 +1,58 @@
 const { uploadToS3, bucketName } = require('../../AWS/s3')
-const { Advertisement, Resident } = require('../../Model/ModelDefinition')
+const { Advertisement, Resident, User } = require('../../Model/ModelDefinition')
 
 const getAllAdvertisements = async (req, res) => {
   try {
     const advertisements = await Advertisement.findAll()
 
-    return res.status(200).json({ advertisements: advertisements })
+    return res.status(200).json({ data: advertisements })
+  } catch (error) {
+    return res.status(500).json({ message: error.message })
+  }
+}
+
+const getAdvertisementById = async (req, res) => {
+  try {
+    const a = await Advertisement.findByPk(req.params.id)
+    if (!a) {
+      return res.status(404).json({ message: 'Không tìm thấy quảng cáo' })
+    }
+
+    // get resident information
+    const r = await Resident.findOne({
+      where: {
+        residentId: a.residentId
+      }
+    })
+
+    if (!r) {
+      return res.status(404).json({ message: 'Không tìm thấy nhà cung cấp' })
+    }
+
+    // get user information
+    const u = await User.findOne({
+      where: {
+        userId: r.userId
+      }
+    })
+
+    // format response
+    const outsourcingServiceData = {
+      advertisementId: a.advertisementId,
+      advertisementName: a.advertisementName,
+      advertisementContent: a.advertisementContent,
+      adverLocation: a.adverLocation,
+      advertisementImage: a.advertisementImage,
+      advertisementStatus: a.advertisementStatus,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      fullname: u.fullname,
+      avatar: u.avatar,
+      email: u.email,
+      phonenumber: r.phonenumber
+    }
+
+    return res.status(200).json({ data: outsourcingServiceData })
   } catch (error) {
     return res.status(500).json({ message: error.message })
   }
@@ -210,6 +257,7 @@ const updateAdvertisementAdmin = async (req, res) => {
 
 module.exports = {
   getAllAdvertisements,
+  getAdvertisementById,
   createAdvertisement,
   updateAdvertisement,
   deleteAdvertisement,
