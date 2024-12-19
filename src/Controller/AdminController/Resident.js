@@ -34,7 +34,8 @@ const getAllResidents = async (req, res) => {
         idcard: resident.idcard,
         phonenumber: resident.phonenumber,
         email: resident.User.email,
-        status: resident.active
+        status: resident.active,
+        role: resident.role,
       }
     })
 
