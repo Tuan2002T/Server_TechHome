@@ -7,10 +7,29 @@ const getAllBills = async (req, res) => {
     }
 
     const residentId = req.resident.residentId
+
+    // Lấy tất cả hóa đơn kèm thông tin ServiceBooking
     const bills = await Bill.findAll({
-      where: { residentId }
+      where: { residentId },
+      include: [
+        {
+          model: ServiceBooking,
+          attributes: ['serviceId', 'outsourcingServiceId'] // Chỉ lấy serviceId và outsourcingServiceId
+        }
+      ]
     })
-    return res.status(200).json(bills)
+
+    const billsWithCanBePay = bills.map((bill) => {
+      const outsourcingServiceId = bill.ServiceBooking?.outsourcingServiceId
+      const canBePay = outsourcingServiceId === null
+
+      return {
+        ...bill.toJSON(),
+        canBePay
+      }
+    })
+
+    return res.status(200).json(billsWithCanBePay)
   } catch (error) {
     return res.status(500).json({ message: error.message })
   }

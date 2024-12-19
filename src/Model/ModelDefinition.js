@@ -323,6 +323,16 @@ Resident.hasMany(Advertisement, {
   onDelete: 'SET NULL'
 })
 
+OutsourcingService.hasMany(ServiceBooking, {
+  foreignKey: 'outsourcingServiceId',
+  onDelete: 'SET NULL'
+})
+ServiceBooking.belongsTo(OutsourcingService, {
+  foreignKey: 'outsourcingServiceId',
+  onDelete: 'CASCADE'
+})
+
+
 sequelizePaginate.paginate(Message)
 sequelizePaginate.paginate(Chat)
 sequelizePaginate.paginate(Notification)

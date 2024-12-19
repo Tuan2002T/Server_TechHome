@@ -8,7 +8,7 @@ const serviceBookingModel = {
   },
   serviceId: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: true
   },
   residentId: {
     type: DataTypes.INTEGER,

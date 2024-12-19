@@ -2,7 +2,8 @@ const {
   Service,
   Resident,
   ServiceBooking,
-  Bill
+  Bill,
+  OutsourcingService
 } = require('../../Model/ModelDefinition')
 
 const getAllServiceBooking = async (req, res) => {
@@ -27,37 +28,78 @@ const bookingService = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Residents only.' })
     }
 
-    const serviceId = req.params.id
+    const { type } = req.body
 
-    const service = await Service.findAll({
-      where: { serviceId }
-    })
-    const resident = await Resident.findOne({
-      where: { residentId: req.user.userId }
-    })
+    if (!type) {
+      const serviceId = req.params.id
 
-    if (!service || !resident) {
-      return res.status(404).json({ message: 'Service or resident not found' })
+      const service = await Service.findAll({
+        where: { serviceId }
+      })
+      const resident = await Resident.findOne({
+        where: { residentId: req.user.userId }
+      })
+
+      if (!service || !resident) {
+        return res
+          .status(404)
+          .json({ message: 'Service or resident not found' })
+      }
+
+      const booking = {
+        serviceId: serviceId,
+        residentId: req.user.userId,
+        bookingDate: new Date(),
+        bookingStatus: 'Pending'
+      }
+
+      const newBooking = await ServiceBooking.create(booking)
+      const bill = {
+        serviceBookingId: newBooking.serviceBookingId,
+        billAmount: service[0].servicePrice,
+        residentId: req.resident.residentId,
+        billDate: new Date(),
+        billName: service[0].serviceName
+      }
+
+      const createBill = await Bill.create(bill)
+      return res.status(201).json({ newBooking, bill: createBill })
+    } else {
+      console.log('vao day')
+
+      const service = await OutsourcingService.findAll({
+        where: { outsourcingServiceId: req.params.id }
+      })
+      const resident = await Resident.findOne({
+        where: { residentId: req.user.userId }
+      })
+
+      if (!service || !resident) {
+        return res
+          .status(404)
+          .json({ message: 'Service or resident not found' })
+      }
+
+      const booking = {
+        outsourcingServiceId: req.params.id,
+        residentId: req.user.userId,
+        bookingDate: new Date(),
+        bookingStatus: 'Pending'
+      }
+      console.log(service[0])
+
+      const newBooking = await ServiceBooking.create(booking)
+      const bill = {
+        serviceBookingId: newBooking.serviceBookingId,
+        billAmount: service[0].outsourceServicePrice,
+        residentId: req.resident.residentId,
+        billDate: new Date(),
+        billName: service[0].outsourcingServiceName
+      }
+
+      const createBill = await Bill.create(bill)
+      return res.status(201).json({ newBooking, bill: createBill })
     }
-
-    const booking = {
-      serviceId: serviceId,
-      residentId: req.user.userId,
-      bookingDate: new Date(),
-      bookingStatus: 'Pending'
-    }
-
-    const newBooking = await ServiceBooking.create(booking)
-    const bill = {
-      serviceBookingId: newBooking.serviceBookingId,
-      billAmount: service[0].servicePrice,
-      residentId: req.resident.residentId,
-      billDate: new Date(),
-      billName: service[0].serviceName
-    }
-
-    const createBill = await Bill.create(bill)
-    return res.status(201).json({ newBooking, bill: createBill })
   } catch (error) {
     return res.status(500).json({ message: error.message })
   }
