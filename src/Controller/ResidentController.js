@@ -32,6 +32,15 @@ const activeResident = async (req, res) => {
     if (!residentId) {
       return res.status(400).json({ message: 'Resident ID is required' })
     }
+    console.log(
+      residentId,
+      email,
+      fullname,
+      idcard,
+      phonenumber,
+      username,
+      password
+    )
 
     const resident = await Resident.findOne({
       where: { residentId, active: false }
@@ -52,7 +61,7 @@ const activeResident = async (req, res) => {
     if (phonenumber) dataResident.phonenumber = phonenumber
     dataResident.active = true
 
-    await User.update(dataUser, { where: { userId: residentId } })
+    await User.update(dataUser, { where: { userId: resident.userId } })
     await Resident.update(dataResident, { where: { residentId } })
 
     res.status(200).json({ message: 'Resident activated' })
@@ -146,6 +155,7 @@ const loginResident = async (req, res) => {
     }
 
     const match = await bcrypt.compare(password, user.password)
+
     if (!match) {
       return res.status(400).json({ message: 'Incorrect password' })
     }
@@ -164,6 +174,7 @@ const loginResident = async (req, res) => {
     user.token = token
     user.refreshToken = refreshToken
     user.save()
+
     res.status(200).json({ user, resident, token, refreshToken })
   } catch (error) {
     console.error('Error during login:', error)
